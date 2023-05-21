@@ -24,6 +24,9 @@ var apiUri = os.Getenv("API_URI")
 var client api.Client
 
 func TestMain(m *testing.M) {
+	if os.Getenv("CI") != "" {
+		return // Exit in case of CI env
+	}
 	// load TLS certificates 1st
 	caCrt, err := os.ReadFile(serverPublicKeyPath)
 	if err != nil {
