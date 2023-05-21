@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package awakari.api.limits;
+
+option go_package = "api/grpc/limits";
+
+import "api/grpc/subject/subject.proto";
+
+service Service {
+  rpc Get(GetRequest) returns (GetResponse);
+}
+
+message GetRequest {
+  subject.Subject subj = 1;
+}
+
+message GetResponse {
+  string userId = 1;
+  int64 count = 2;
+}

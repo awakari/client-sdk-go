@@ -1,0 +1,122 @@
+package subscriptions
+
+import (
+	"context"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
+)
+
+type clientMock struct{}
+
+func newClientMock() ServiceClient {
+	return clientMock{}
+}
+
+func (cm clientMock) Create(ctx context.Context, req *CreateRequest, opts ...grpc.CallOption) (resp *CreateResponse, err error) {
+	resp = &CreateResponse{}
+	switch req.Md.Description {
+	case "fail":
+		err = status.Error(codes.Internal, "internal failure")
+	case "fail_auth":
+		err = status.Error(codes.Unauthenticated, "authentication failure")
+	case "invalid":
+		err = status.Error(codes.InvalidArgument, "invalid subscription condition")
+	case "limit_reached":
+		err = status.Error(codes.ResourceExhausted, "subscriptions count limit reached")
+	case "busy":
+		err = status.Error(codes.Unavailable, "retry the operation")
+	default:
+		resp.Id = "sub0"
+	}
+	return
+}
+
+func (cm clientMock) Read(ctx context.Context, req *ReadRequest, opts ...grpc.CallOption) (resp *ReadResponse, err error) {
+	resp = &ReadResponse{}
+	switch req.Id {
+	case "fail":
+		err = status.Error(codes.Internal, "internal failure")
+	case "fail_auth":
+		err = status.Error(codes.Unauthenticated, "authentication failure")
+	case "missing":
+		err = status.Error(codes.NotFound, "subscription not found")
+	default:
+		resp.Md = &Metadata{
+			Description: "subscription",
+			Enabled:     true,
+		}
+		resp.Cond = &ConditionOutput{
+			Cond: &ConditionOutput_Gc{
+				Gc: &GroupConditionOutput{
+					Logic: GroupLogic_Or,
+					Group: []*ConditionOutput{
+						{
+							Not: true,
+							Cond: &ConditionOutput_Kc{
+								Kc: &KiwiConditionOutput{
+									Key:     "k0",
+									Pattern: "p0",
+									Partial: false,
+								},
+							},
+						},
+						{
+							Cond: &ConditionOutput_Kc{
+								Kc: &KiwiConditionOutput{
+									Key:     "k1",
+									Pattern: "p1",
+									Partial: true,
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+	}
+	return
+}
+
+func (cm clientMock) UpdateMetadata(ctx context.Context, req *UpdateMetadataRequest, opts ...grpc.CallOption) (resp *emptypb.Empty, err error) {
+	resp = &emptypb.Empty{}
+	switch req.Id {
+	case "fail":
+		err = status.Error(codes.Internal, "internal failure")
+	case "fail_auth":
+		err = status.Error(codes.Unauthenticated, "authentication failure")
+	case "missing":
+		err = status.Error(codes.NotFound, "subscription not found")
+	}
+	return
+}
+
+func (cm clientMock) Delete(ctx context.Context, req *DeleteRequest, opts ...grpc.CallOption) (resp *emptypb.Empty, err error) {
+	resp = &emptypb.Empty{}
+	switch req.Id {
+	case "fail":
+		err = status.Error(codes.Internal, "internal failure")
+	case "fail_auth":
+		err = status.Error(codes.Unauthenticated, "authentication failure")
+	case "missing":
+		err = status.Error(codes.NotFound, "subscription not found")
+	}
+	return
+}
+
+func (cm clientMock) SearchOwn(ctx context.Context, req *SearchOwnRequest, opts ...grpc.CallOption) (resp *SearchOwnResponse, err error) {
+	resp = &SearchOwnResponse{}
+	switch req.Cursor {
+	case "":
+		resp.Ids = []string{
+			"sub0",
+			"sub1",
+		}
+	case "fail":
+		err = status.Error(codes.Internal, "internal failure")
+	case "fail_auth":
+		err = status.Error(codes.Unauthenticated, "authentication failure")
+	}
+	return
+}
