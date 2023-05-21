@@ -16,42 +16,7 @@ Reference Awakari SDK for a Golang client
 
 # 2. Usage
 
-```go
-package main
-
-import (
-   clientSdk "github.com/awakari/client-sdk-go"
-   "os"
-)
-
-func main() {
-    
-    // load TLS certificates
-    var caCrt []byte
-    var err error
-    caCrt, err = os.ReadFile("ca.crt")
-    var clientCrt []byte
-    if err == nil {
-        clientCrt, err = os.ReadFile("client.crt")
-    }
-    var clientKey []byte
-    if err == nil {
-        clientKey, err = os.ReadFile("client.key")
-    }
-    
-    var client clientSdk.Client
-    client, err = clientSdk.
-        NewBuilder().
-        ServerPublicKey(caCrt).
-        ClientKeyPair(clientCrt, clientKey).
-        ApiUri("awakari.com:443").
-        Build()
-    if err == nil {
-        defer client.Close() 
-        // TODO: use the client here to manage subscriptions, publish and receive messages, etc... 
-    }
-}
-```
+See the [int_test.go](int_test.go) for the code example.
 
 # 3. Contributing
 
@@ -72,6 +37,10 @@ TODO
 ### 3.3.1. Functional
 
 ```shell
+API_URI=api.local:443 \
+CLIENT_CERT_PATH=test0.client0.crt \
+CLIENT_PRIVATE_KEY_PATH=test0.client0.key \
+SERVER_PUBLIC_KEY_PATH=ca.crt \
 make test
 ```
 

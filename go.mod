@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/cloudevents/sdk-go/binding/format/protobuf/v2 v2.14.0
+	github.com/google/uuid v1.3.0
 	github.com/stretchr/testify v1.8.0
 	google.golang.org/grpc v1.55.0
 	google.golang.org/protobuf v1.30.0

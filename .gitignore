@@ -22,3 +22,5 @@ go.work
 cover.tmp
 
 **/*.pb.go
+*.crt
+*.key

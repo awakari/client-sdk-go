@@ -1,4 +1,4 @@
-package client_sdk_go
+package api
 
 import (
 	"context"

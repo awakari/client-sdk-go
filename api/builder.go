@@ -1,4 +1,4 @@
-package client_sdk_go
+package api
 
 import (
 	"crypto/tls"
@@ -13,31 +13,31 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-type Builder interface {
+type ClientBuilder interface {
 
 	// ServerPublicKey sets the CA certificate to authenticate the Awakari service.
 	// Should be used together with ClientKeyPair and ApiUri.
-	ServerPublicKey(caCrt []byte) Builder
+	ServerPublicKey(caCrt []byte) ClientBuilder
 
 	// ClientKeyPair sets the client certificate key pair to allow Awakari service to authenticate the client.
 	// Should be used together with ServerPublicKey and ApiUri.
-	ClientKeyPair(clientCrt, clientKey []byte) Builder
+	ClientKeyPair(clientCrt, clientKey []byte) ClientBuilder
 
 	// ApiUri sets the Awakari public API URI. Should be used together with ServerPublicKey and ClientKeyPair.
 	// Useful when a client needs every available public API method.
-	ApiUri(apiUri string) Builder
+	ApiUri(apiUri string) ClientBuilder
 
 	// ReadUri sets the Awakari messages reading API URI. Overrides any value set by ApiUri.
 	// Useful when the specific message reading API is needed by the client.
-	ReadUri(readUri string) Builder
+	ReadUri(readUri string) ClientBuilder
 
 	// SubscriptionsUri sets the Awakari subscriptions API URI. Overrides any value set by ApiUri.
 	// Useful when the specific subscriptions management API is needed by the client.
-	SubscriptionsUri(subsUri string) Builder
+	SubscriptionsUri(subsUri string) ClientBuilder
 
 	// WriteUri sets the Awakari messages publishing API URI. Overrides any value set by ApiUri.
 	// Useful when the specific message publishing API is needed by the client.
-	WriteUri(writeUri string) Builder
+	WriteUri(writeUri string) ClientBuilder
 
 	// Build instantiates the Client instance and returns it.
 	Build() (c Client, err error)
@@ -53,37 +53,37 @@ type builder struct {
 	writeUri  string
 }
 
-func NewBuilder() Builder {
+func NewClientBuilder() ClientBuilder {
 	return &builder{}
 }
 
-func (b *builder) ServerPublicKey(caCrt []byte) Builder {
+func (b *builder) ServerPublicKey(caCrt []byte) ClientBuilder {
 	b.caCrt = caCrt
 	return b
 }
 
-func (b *builder) ClientKeyPair(clientCrt, clientKey []byte) Builder {
+func (b *builder) ClientKeyPair(clientCrt, clientKey []byte) ClientBuilder {
 	b.clientCrt = clientCrt
 	b.clientKey = clientKey
 	return b
 }
 
-func (b *builder) ApiUri(apiUri string) Builder {
+func (b *builder) ApiUri(apiUri string) ClientBuilder {
 	b.apiUri = apiUri
 	return b
 }
 
-func (b *builder) ReadUri(readUri string) Builder {
+func (b *builder) ReadUri(readUri string) ClientBuilder {
 	b.readUri = readUri
 	return b
 }
 
-func (b *builder) SubscriptionsUri(subsUri string) Builder {
+func (b *builder) SubscriptionsUri(subsUri string) ClientBuilder {
 	b.subsUri = subsUri
 	return b
 }
 
-func (b *builder) WriteUri(writeUri string) Builder {
+func (b *builder) WriteUri(writeUri string) ClientBuilder {
 	b.writeUri = writeUri
 	return b
 }
