@@ -25,31 +25,31 @@ import (
 )
 
 func main() {
-	
-	// load TLS certificates
+    
+    // load TLS certificates
     var caCrt []byte
-	var err error
-	caCrt, err = os.ReadFile("ca.crt")
-	var clientCrt []byte
-	if err == nil {
-		clientCrt, err = os.ReadFile("client.crt")
-	}
-	var clientKey []byte
-	if err == nil {
-		clientKey, err = os.ReadFile("client.key")
+    var err error
+    caCrt, err = os.ReadFile("ca.crt")
+    var clientCrt []byte
+    if err == nil {
+        clientCrt, err = os.ReadFile("client.crt")
     }
-	
-	var client clientSdk.Client
-	client, err = clientSdk.
-		NewBuilder().
-		ServerPublicKey(caCrt).
-		ClientKeyPair(clientCrt, clientKey).
-		ApiUri("awakari.com:443").
-		Build()
-	if err == nil {
-		defer client.Close() 
-		// TODO: use the client here to manage subscriptions, publish and receive messages, etc... 
-	}
+    var clientKey []byte
+    if err == nil {
+        clientKey, err = os.ReadFile("client.key")
+    }
+    
+    var client clientSdk.Client
+    client, err = clientSdk.
+        NewBuilder().
+        ServerPublicKey(caCrt).
+        ClientKeyPair(clientCrt, clientKey).
+        ApiUri("awakari.com:443").
+        Build()
+    if err == nil {
+        defer client.Close() 
+        // TODO: use the client here to manage subscriptions, publish and receive messages, etc... 
+    }
 }
 ```
 
