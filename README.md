@@ -170,8 +170,7 @@ import (
    "github.com/awakari/client-sdk-go/api"
    "github.com/awakari/client-sdk-go/model/usage"
    "time"
-)
-...
+   ...
 )
 
 func main() {
@@ -181,14 +180,14 @@ func main() {
    ...
    ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Second)
    defer cancel()
-   var u usage.Limit
+   var l usage.Limit
    var err error
-   u, err = client.ReadUsageLimit(ctx, userId, usage.SubjectPublishMessages)
+   l, err = client.ReadUsageLimit(ctx, userId, usage.SubjectPublishMessages)
    if err == nil {
       if u.UserId == "" {
-         fmt.Printf("group usage publish messages limit: %d", u.Count)
+         fmt.Printf("group usage publish messages limit: %d", l.Count)
       } else {
-		  fmt.Printf("user specific publish messages limit: %+v", u.Count)
+		  fmt.Printf("user specific publish messages limit: %d", l.Count)
       }
    }
 }
@@ -196,7 +195,110 @@ func main() {
 
 ## 3.2. Permits
 
+Usage permits represents the current usage statistics (counters) by the subject. Similar to usage limit, the counters
+represent the group-level usage when the user id is empty.
+
+```go
+package main
+
+import (
+   "context"
+   "fmt"
+   "github.com/awakari/client-sdk-go/api"
+   "github.com/awakari/client-sdk-go/model/usage"
+   "time"
+   ...
+)
+
+func main() {
+   ...
+   var client api.Client // initialize client
+   var userId string     // set this to "sub" field value from an authentication token, for example
+   ...
+   ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Second)
+   defer cancel()
+   var u usage.Usage
+   var err error
+   u, err = client.ReadUsage(ctx, userId, usage.SubjectSubscriptions)
+   if err == nil {
+      if u.UserId == "" {
+         fmt.Printf("group subscriptions usage: %d", l.Count)
+      } else {
+		  fmt.Printf("user specific subscriptions usage: %d", l.Count)
+      }
+   }
+}
+```
+
 ## 3.3. Subscriptions
+
+```go
+package main
+
+import (
+   "context"
+   "fmt"
+   "github.com/awakari/client-sdk-go/api"
+   "github.com/awakari/client-sdk-go/model/usage"
+   "time"
+   ...
+)
+
+func main() {
+   ...
+   var client api.Client // initialize client
+   var userId string     // set this to "sub" field value from an authentication token, for example
+   ...
+   ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Minute)
+   defer cancel()
+   
+   // Create a subscription
+   var subId string
+   var err error
+   subData := subscription.Data{
+      Metadata: subscription.Metadata{
+         Description: "my subscription",
+         Enabled:     true,
+      },
+      Condition: condition.NewBuilder().
+         MatchAttrKey("tags").
+         MatchAttrValuePattern("SpaceX").
+         MatchAttrValuePartial().
+         BuildKiwiTreeCondition(),
+   }
+   subId, err = client.CreateSubscription(ctx, userId, subData)
+   
+   // Update the subscription mutable fields
+   md := subscription.Metadata{
+      Description: "my disabled subscription",
+      Enabled:     false,
+   }
+   err = client.UpdateSubscriptionMetadata(ctx, userId, subId, md)
+   
+   // Delete the subscription
+   err = client.DeleteSubscription(ctx, userId, subId)
+   if err != nil {
+	   panic(err)
+   }
+   
+   // Search own subscription ids
+   var ids []string
+   limit := uint32(10)
+   ids, err = client.Search(ctx, userId, limit, "")
+   if err != nil {
+	   panic(err)
+   } 
+   for _, id := range ids {
+      // Read the subscription details
+      subData, err = client.Read(ctx, userId, id)
+	  if err == nil {
+		  panic(err)
+      }
+	  fmt.Printf("subscription %d details: %+v\n", id, subData)
+   }
+}
+```
+
 
 ## 3.4. Messages
 
