@@ -137,7 +137,7 @@ func main() {
        NewClientBuilder().
        ServerPublicKey(caCrt).
        ClientKeyPair(clientCrt, clientKey).
-	   ApiUri("awakari.com:443").
+       ApiUri("awakari.com:443").
        Build()
    if err != nil {
 	   panic(err)
@@ -187,7 +187,7 @@ func main() {
       if u.UserId == "" {
          fmt.Printf("group usage publish messages limit: %d", l.Count)
       } else {
-		  fmt.Printf("user specific publish messages limit: %d", l.Count)
+         fmt.Printf("user specific publish messages limit: %d", l.Count)
       }
    }
    ...
@@ -225,7 +225,7 @@ func main() {
       if u.UserId == "" {
          fmt.Printf("group subscriptions usage: %d", l.Count)
       } else {
-		  fmt.Printf("user specific subscriptions usage: %d", l.Count)
+         fmt.Printf("user specific subscriptions usage: %d", l.Count)
       }
    }
    ...
