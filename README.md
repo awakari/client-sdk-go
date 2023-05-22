@@ -107,9 +107,92 @@ as a user id.
 
 # 3. Usage
 
-See the [int_test.go](int_test.go) for the code example.
+See the [int_test.go](int_test.go) for the complete test code example.
+
+Before using the API, it's necessary to initialize the client:
+```go
+package main
+
+import (
+   "github.com/awakari/client-sdk-go/api"
+   "os"
+   ...
+)
+
+func main() {
+   ...
+   caCrt, err := os.ReadFile("ca.crt")
+   if err != nil {
+	   panic(err)
+   }
+   clientCrt, err := os.ReadFile("client.crt")
+   if err != nil {
+      panic(err)
+   }
+   clientKey, err := os.ReadFile("client.key")
+   if err != nil {
+      panic(err)
+   }
+   client, err := api.
+       NewClientBuilder().
+       ServerPublicKey(caCrt).
+       ClientKeyPair(clientCrt, clientKey).
+	   ApiUri("awakari.com:443").
+       Build()
+   if err != nil {
+	   panic(err)
+   }
+   defer client.Close()
+   ...
+}
+```
 
 ## 3.1. Limits
+
+Usage limit represents the successful API call count limit. The limit is identified per:
+* group id
+* user id (optional)
+* subject
+
+There are the group-level limits where user id is not specified. All users from the group share the group limit in this
+case.
+
+Usage subject may be one of:
+* Publish Messages
+* Subscriptions
+
+```go
+package main
+
+import (
+   "context"
+   "fmt"
+   "github.com/awakari/client-sdk-go/api"
+   "github.com/awakari/client-sdk-go/model/usage"
+   "time"
+)
+...
+)
+
+func main() {
+   ...
+   var client api.Client // initialize client
+   var userId string     // set this to "sub" field value from an authentication token, for example
+   ...
+   ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Second)
+   defer cancel()
+   var u usage.Limit
+   var err error
+   u, err = client.ReadUsageLimit(ctx, userId, usage.SubjectPublishMessages)
+   if err == nil {
+      if u.UserId == "" {
+         fmt.Printf("group usage publish messages limit: %d", u.Count)
+      } else {
+		  fmt.Printf("user specific publish messages limit: %+v", u.Count)
+      }
+   }
+}
+```
 
 ## 3.2. Permits
 
