@@ -140,7 +140,7 @@ func main() {
        ApiUri("awakari.com:443").
        Build()
    if err != nil {
-	   panic(err)
+       panic(err)
    }
    defer client.Close()
    ...
@@ -280,7 +280,7 @@ func main() {
    // Delete the subscription
    err = client.DeleteSubscription(ctx, userId, subId)
    if err != nil {
-	   panic(err)
+      panic(err)
    }
    
    // Search own subscription ids
@@ -293,7 +293,7 @@ func main() {
    for _, id := range ids {
       // Read the subscription details
       subData, err = client.Read(ctx, userId, id)
-	  if err == nil {
+      if err == nil {
          panic(err)
       }
       fmt.Printf("subscription %d details: %+v\n", id, subData)
@@ -367,7 +367,7 @@ func main() {
    var n uint32
    for writtenCount < uint32(len(msgs)) {
       n, err = ws.WriteBatch(msgs)
-	  if err != nil {
+      if err != nil {
          break
       }
       writtenCount += n
@@ -408,14 +408,14 @@ func main() {
    defer rs.Close()
    var msg *pb.CloudEvent
    for {
-	   msg, err = rs.Read()
-	   if err != nil {
-          break
-       }
-       fmt.Printf("subscription %s - received the next message: %+v\n", subId, msg)
+      msg, err = rs.Read()
+      if err != nil {
+         break
+      }
+      fmt.Printf("subscription %s - received the next message: %+v\n", subId, msg)
    }
    if err != nil {
-	   panic(err)
+      panic(err)
    }
    ...
 }
