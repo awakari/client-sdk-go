@@ -33,7 +33,7 @@ A client's certificate is used by Awakari to extract the ***DN*** value. This va
 
 ### 1.1.3. User Identity
 
-> **Info**:
+> **Note**:
 > 
 > Any Group Client can be used by multiple users.
 
