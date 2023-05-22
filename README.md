@@ -190,6 +190,7 @@ func main() {
 		  fmt.Printf("user specific publish messages limit: %d", l.Count)
       }
    }
+   ...
 }
 ```
 
@@ -227,6 +228,7 @@ func main() {
 		  fmt.Printf("user specific subscriptions usage: %d", l.Count)
       }
    }
+   ...
 }
 ```
 
@@ -296,15 +298,128 @@ func main() {
       }
 	  fmt.Printf("subscription %d details: %+v\n", id, subData)
    }
+   
+   ...
 }
 ```
-
 
 ## 3.4. Messages
 
 ### 3.4.1. Publishing
 
+```go
+package main
+
+import (
+   "context"
+   "fmt"
+   "github.com/awakari/client-sdk-go/api"
+   "github.com/awakari/client-sdk-go/model/usage"
+   "github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
+   "time"
+)
+...
+)
+
+func main() {
+   ...
+   var client api.Client // initialize client
+   var userId string     // set this to "sub" field value from an authentication token, for example
+   ...
+   ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Second)
+   defer cancel()
+   var ws model.WriteStream[*pb.CloudEvent]
+   ws, err = client.WriteMessages(ctx, userId)
+   if err == nil {
+      panic(err)
+   }
+   defer ws.Close()
+   msgs := []*pb.CloudEvent{
+      {
+         Id:          uuid.NewString(),
+         Source:      "http://arxiv.org/abs/2305.06364",
+         SpecVersion: "1.0",
+         Type:        "com.github.awakari.producer-rss",
+         Attributes: map[string]*pb.CloudEventAttributeValue{
+            "summary": {
+               Attr: &pb.CloudEventAttributeValue_CeString{
+                  CeString: "<p>We propose that the dark matter of our universe could be sterile neutrinos which reside within the twin sector of a mirror twin Higgs model. In our scenario, these particles are produced through a version of the Dodelson-Widrow mechanism that takes place entirely within the twin sector, yielding a dark matter candidate that is consistent with X-ray and gamma-ray line constraints. Furthermore, this scenario can naturally avoid the cosmological problems that are typically encountered in mirror twin Higgs models. In particular, if the sterile neutrinos in the Standard Model sector decay out of equilibrium, they can heat the Standard Model bath and reduce the contributions of the twin particles to $N_\\mathrm{eff}$. Such decays also reduce the effective temperature of the dark matter, thereby relaxing constraints from large-scale structure. The sterile neutrinos included in this model are compatible with the seesaw mechanism for generating Standard Model neutrino masses. </p> ",
+               },
+            },
+            "tags": {
+               Attr: &pb.CloudEventAttributeValue_CeString{
+                  CeString: "neutrino dark matter cosmology higgs standard model dodelson-widrow",
+               },
+            },
+            "title": {
+               Attr: &pb.CloudEventAttributeValue_CeString{
+                  CeString: "Twin Sterile Neutrino Dark Matter. (arXiv:2305.06364v1 [hep-ph])",
+               },
+            },
+         },
+         Data: &pb.CloudEvent_TextData{
+            TextData: "",
+         },
+      },
+   }
+   
+   var writtenCount uint32
+   var n uint32
+   for writtenCount < uint32(len(msgs)) {
+      n, err = ws.WriteBatch(msgs)
+	  if err != nil {
+		  break
+      }
+	  writtenCount += n
+   }
+   if err != nil {
+      panic(err)
+   }
+   ...
+}
+```
+
 ### 3.4.2. Receiving
+
+```go
+package main
+
+import (
+   "context"
+   "fmt"
+   "github.com/awakari/client-sdk-go/api"
+   "github.com/awakari/client-sdk-go/model/usage"
+   "time"
+   ...
+)
+
+func main() {
+   ...
+   var client api.Client // initialize client
+   var userId string     // set this to "sub" field value from an authentication token, for example
+   ...
+   ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Second)
+   defer cancel()
+   var rs model.ReadStream[*pb.CloudEvent]
+   rs, err = client.ReadMessages(ctx, userId, subId)
+   if err != nil {
+	   panic(err)
+   }
+   defer rs.Close()
+   var msg *pb.CloudEvent
+   for {
+	   msg, err = rs.Read()
+	   if err != nil {
+		   break
+       }
+	   fmt.Printf("subscription %s - received the next message: %+v\n", subId, msg)
+   }
+   if err != nil {
+	   panic(err)
+   }
+   ...
+}
+```
 
 # 4. Contributing
 
