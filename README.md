@@ -288,15 +288,15 @@ func main() {
    limit := uint32(10)
    ids, err = client.Search(ctx, userId, limit, "")
    if err != nil {
-	   panic(err)
+      panic(err)
    } 
    for _, id := range ids {
       // Read the subscription details
       subData, err = client.Read(ctx, userId, id)
 	  if err == nil {
-		  panic(err)
+         panic(err)
       }
-	  fmt.Printf("subscription %d details: %+v\n", id, subData)
+      fmt.Printf("subscription %d details: %+v\n", id, subData)
    }
    
    ...
@@ -368,9 +368,9 @@ func main() {
    for writtenCount < uint32(len(msgs)) {
       n, err = ws.WriteBatch(msgs)
 	  if err != nil {
-		  break
+         break
       }
-	  writtenCount += n
+      writtenCount += n
    }
    if err != nil {
       panic(err)
@@ -410,9 +410,9 @@ func main() {
    for {
 	   msg, err = rs.Read()
 	   if err != nil {
-		   break
+          break
        }
-	   fmt.Printf("subscription %s - received the next message: %+v\n", subId, msg)
+       fmt.Printf("subscription %s - received the next message: %+v\n", subId, msg)
    }
    if err != nil {
 	   panic(err)
