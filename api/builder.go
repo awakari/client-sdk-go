@@ -25,6 +25,7 @@ type ClientBuilder interface {
 
 	// ApiUri sets the Awakari public API URI. Should be used together with ServerPublicKey and ClientKeyPair.
 	// Useful when a client needs every available public API method.
+	// Enables additionally the API methods to read the usage limits and permits.
 	ApiUri(apiUri string) ClientBuilder
 
 	// ReadUri sets the Awakari messages reading API URI. Overrides any value set by ApiUri.
