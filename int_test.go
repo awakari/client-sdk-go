@@ -91,8 +91,8 @@ func TestBasicApiUsage(t *testing.T) {
 	var usageSubs usage.Usage
 	usageSubs, err = client.ReadUsage(ctx, userId, usage.SubjectSubscriptions)
 	assert.Nil(t, err)
-	assert.Greater(t, usageSubs.Count, usageSubsStart.Count)
-	assert.Greater(t, usageSubs.CountTotal, usageSubsStart.CountTotal)
+	assert.Equal(t, usageSubsStart.Count+1, usageSubs.Count)
+	assert.Equal(t, usageSubsStart.CountTotal+1, usageSubs.CountTotal)
 
 	// Open a Read Stream
 	var rs model.ReadStream[*pb.CloudEvent]
@@ -145,8 +145,8 @@ func TestBasicApiUsage(t *testing.T) {
 	var usagePubMsgs usage.Usage
 	usagePubMsgs, err = client.ReadUsage(ctx, userId, usage.SubjectPublishMessages)
 	assert.Nil(t, err)
-	assert.Greater(t, usagePubMsgs.Count, usagePubMsgsStart.Count)
-	assert.Greater(t, usagePubMsgs.CountTotal, usagePubMsgsStart.CountTotal)
+	assert.Equal(t, usagePubMsgsStart.Count+1, usagePubMsgs.Count)
+	assert.Equal(t, usagePubMsgsStart.CountTotal+1, usagePubMsgs.CountTotal)
 
 	// Read the Message by the Subscription
 	var msgRead *pb.CloudEvent
