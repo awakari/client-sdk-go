@@ -10,6 +10,8 @@ import (
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/metadata"
 	"os"
 	"testing"
 	"time"
@@ -21,12 +23,16 @@ var serverPublicKeyPath = os.Getenv("SERVER_PUBLIC_KEY_PATH")
 var clientCertPath = os.Getenv("CLIENT_CERT_PATH")
 var clientPrivateKeyPath = os.Getenv("CLIENT_PRIVATE_KEY_PATH")
 var apiUri = os.Getenv("API_URI")
-var client api.Client
 
-func TestMain(m *testing.M) {
+func TestPublicApiUsage(t *testing.T) {
+
 	if os.Getenv("CI") != "" {
-		return // Exit in case of CI env
+		t.Skip("Skipping test in CI environment")
 	}
+
+	ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Minute)
+	defer cancel()
+
 	// load TLS certificates 1st
 	caCrt, err := os.ReadFile(serverPublicKeyPath)
 	if err != nil {
@@ -40,31 +46,17 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		panic(err)
 	}
+
 	// init the client
+	var client api.Client
 	client, err = api.
 		NewClientBuilder().
 		ServerPublicKey(caCrt).
 		ClientKeyPair(clientCrt, clientKey).
 		ApiUri(apiUri).
 		Build()
-	if err != nil {
-		panic(err)
-	}
+	require.Nil(t, err)
 	defer client.Close()
-	// run and exit
-	code := m.Run()
-	os.Exit(code)
-}
-
-func TestBasicApiUsage(t *testing.T) {
-
-	if os.Getenv("CI") != "" {
-		t.Skip("Skipping test in CI environment")
-	}
-
-	ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Minute)
-	defer cancel()
-	var err error
 
 	// Get the initial Subscriptions API Usage
 	var usageSubsStart usage.Usage
@@ -165,4 +157,60 @@ func TestBasicApiUsage(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, usageSubsStart.Count, usageSubs.Count)
 	assert.Equal(t, usageSubsStart.CountTotal, usageSubs.CountTotal)
+}
+
+func TestInternalWriter(t *testing.T) {
+
+	if os.Getenv("CI") != "" {
+		t.Skip("Skipping test in CI environment")
+	}
+
+	ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Minute)
+	defer cancel()
+	ctx = metadata.AppendToOutgoingContext(ctx, "x-awakari-group-id", "test-group-0")
+
+	var client api.Client
+	var err error
+	client, err = api.
+		NewClientBuilder().
+		WriteUri(apiUri).
+		Build()
+	require.Nil(t, err)
+	defer client.Close()
+
+	// Write a Message
+	var ws model.WriteStream[*pb.CloudEvent]
+	ws, err = client.WriteMessages(ctx, userId)
+	assert.Nil(t, err)
+	defer ws.Close()
+	msgSend := &pb.CloudEvent{
+		Id:          uuid.NewString(),
+		Source:      "http://arxiv.org/abs/2305.06364",
+		SpecVersion: "1.0",
+		Type:        "com.github.awakari.producer-rss",
+		Attributes: map[string]*pb.CloudEventAttributeValue{
+			"summary": {
+				Attr: &pb.CloudEventAttributeValue_CeString{
+					CeString: "<p>We propose that the dark matter of our universe could be sterile neutrinos which reside within the twin sector of a mirror twin Higgs model. In our scenario, these particles are produced through a version of the Dodelson-Widrow mechanism that takes place entirely within the twin sector, yielding a dark matter candidate that is consistent with X-ray and gamma-ray line constraints. Furthermore, this scenario can naturally avoid the cosmological problems that are typically encountered in mirror twin Higgs models. In particular, if the sterile neutrinos in the Standard Model sector decay out of equilibrium, they can heat the Standard Model bath and reduce the contributions of the twin particles to $N_\\mathrm{eff}$. Such decays also reduce the effective temperature of the dark matter, thereby relaxing constraints from large-scale structure. The sterile neutrinos included in this model are compatible with the seesaw mechanism for generating Standard Model neutrino masses. </p> ",
+				},
+			},
+			"tags": {
+				Attr: &pb.CloudEventAttributeValue_CeString{
+					CeString: "neutrino dark matter cosmology higgs standard model dodelson-widrow",
+				},
+			},
+			"title": {
+				Attr: &pb.CloudEventAttributeValue_CeString{
+					CeString: "Twin Sterile Neutrino Dark Matter. (arXiv:2305.06364v1 [hep-ph])",
+				},
+			},
+		},
+		Data: &pb.CloudEvent_TextData{
+			TextData: "",
+		},
+	}
+	var writtenCount uint32
+	writtenCount, err = ws.WriteBatch([]*pb.CloudEvent{msgSend})
+	assert.Equal(t, uint32(1), writtenCount)
+	assert.Nil(t, err)
 }
