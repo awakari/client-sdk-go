@@ -16,5 +16,4 @@ message SubmitMessagesRequest {
 
 message SubmitMessagesResponse {
   uint32 ackCount = 1;
-  string err = 2;
 }

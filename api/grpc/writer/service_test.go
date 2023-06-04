@@ -13,10 +13,10 @@ import (
 func TestService_Write(t *testing.T) {
 	svc := NewService(newClientMock())
 	cases := map[string]struct {
-		msgs     []*pb.CloudEvent
-		ackCount uint32
-		err      error
-		errMsg   string
+		msgs      []*pb.CloudEvent
+		ackCount0 uint32
+		ackCount1 uint32
+		err       error
 	}{
 		"ok": {
 			msgs: []*pb.CloudEvent{
@@ -30,7 +30,8 @@ func TestService_Write(t *testing.T) {
 					Id: "msg2",
 				},
 			},
-			ackCount: 3,
+			ackCount0: 3,
+			ackCount1: 3,
 		},
 		"fail": {
 			msgs: []*pb.CloudEvent{
@@ -44,9 +45,8 @@ func TestService_Write(t *testing.T) {
 					Id: "msg2",
 				},
 			},
-			ackCount: 1,
-			err:      ErrInternal,
-			errMsg:   "internal failure: rpc error: code = Internal desc = internal failure",
+			ackCount0: 1,
+			err:       ErrInternal,
 		},
 		"limit reached": {
 			msgs: []*pb.CloudEvent{
@@ -60,9 +60,8 @@ func TestService_Write(t *testing.T) {
 					Id: "limit_reached",
 				},
 			},
-			ackCount: 2,
-			err:      limits.ErrReached,
-			errMsg:   "usage limit reached: rpc error: code = ResourceExhausted desc = usage limit reached",
+			ackCount0: 2,
+			err:       limits.ErrReached,
 		},
 		"fail auth": {
 			msgs: []*pb.CloudEvent{
@@ -76,21 +75,21 @@ func TestService_Write(t *testing.T) {
 					Id: "msg2",
 				},
 			},
-			err:    auth.ErrAuth,
-			errMsg: "authentication failure: rpc error: code = Unauthenticated desc = authentication failure",
+			err: auth.ErrAuth,
 		},
 	}
 	for k, c := range cases {
 		t.Run(k, func(t *testing.T) {
-			ws, err := svc.OpenStream(context.TODO(), "user0")
+			w, err := svc.OpenWriter(context.TODO(), "user0")
 			require.Nil(t, err)
 			var ackCount uint32
-			ackCount, err = ws.WriteBatch(c.msgs)
-			assert.Equal(t, c.ackCount, ackCount)
+			ackCount, err = w.WriteBatch(c.msgs)
+			assert.Equal(t, c.ackCount0, ackCount)
+			require.Nil(t, err)
+			ackCount, err = w.WriteBatch(c.msgs)
+			assert.Equal(t, c.ackCount1, ackCount)
 			assert.ErrorIs(t, err, c.err)
-			if err != nil {
-				assert.Equal(t, c.errMsg, err.Error())
-			}
+			err = w.Close()
 		})
 	}
 }

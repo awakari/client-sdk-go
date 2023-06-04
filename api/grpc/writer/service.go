@@ -13,7 +13,7 @@ import (
 )
 
 type Service interface {
-	OpenStream(ctx context.Context, userId string) (ws model.WriteStream[*pb.CloudEvent], err error)
+	OpenWriter(ctx context.Context, userId string) (w model.Writer[*pb.CloudEvent], err error)
 }
 
 type service struct {
@@ -28,13 +28,13 @@ func NewService(client ServiceClient) Service {
 	}
 }
 
-func (svc service) OpenStream(ctx context.Context, userId string) (ws model.WriteStream[*pb.CloudEvent], err error) {
+func (svc service) OpenWriter(ctx context.Context, userId string) (w model.Writer[*pb.CloudEvent], err error) {
 	ctx = auth.SetOutgoingAuthInfo(ctx, userId)
 	var stream Service_SubmitMessagesClient
 	stream, err = svc.client.SubmitMessages(ctx)
 	err = decodeError(err)
 	if err == nil {
-		ws = newWriteStream(stream)
+		w = newStreamWriter(stream)
 	}
 	return
 }

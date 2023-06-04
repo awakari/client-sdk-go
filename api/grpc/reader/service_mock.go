@@ -1,4 +1,4 @@
-package messages
+package reader
 
 import (
 	"context"
@@ -14,15 +14,17 @@ func NewServiceMock() Service {
 	return serviceMock{}
 }
 
-func (sm serviceMock) Read(ctx context.Context, userId, subId string) (rs model.ReadStream[*pb.CloudEvent], err error) {
+func (sm serviceMock) OpenReader(ctx context.Context, userId, subId string, batchSize uint32) (rs model.Reader[[]*pb.CloudEvent], err error) {
 	switch subId {
 	case "fail":
 		err = ErrInternal
 	case "fail_auth":
 		err = auth.ErrAuth
+	case "missing":
+		err = ErrNotFound
 	}
 	if err == nil {
-		rs = newReadStreamMock(userId, subId)
+		rs = newStreamReaderMock(subId, batchSize)
 	}
 	return
 }

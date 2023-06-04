@@ -329,7 +329,7 @@ func main() {
    ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Second)
    defer cancel()
    var ws model.WriteStream[*pb.CloudEvent]
-   ws, err = client.WriteMessages(ctx, userId)
+   ws, err = client.OpenMessagesWriter(ctx, userId)
    if err == nil {
       panic(err)
    }
@@ -390,29 +390,30 @@ import (
    "github.com/awakari/client-sdk-go/api"
    "github.com/awakari/client-sdk-go/model/usage"
    "time"
-   ...
+...
 )
 
 func main() {
    ...
    var client api.Client // initialize client
    var userId string     // set this to "sub" field value from an authentication token, for example
+   batchSize := uint32(16)
    ...
    ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Second)
    defer cancel()
-   var rs model.ReadStream[*pb.CloudEvent]
-   rs, err = client.ReadMessages(ctx, userId, subId)
+   var r model.ReadStream[*pb.CloudEvent]
+   r, err = client.OpenMessagesReader(ctx, userId, subId, batchSize)
    if err != nil {
-	   panic(err)
+      panic(err)
    }
-   defer rs.Close()
-   var msg *pb.CloudEvent
+   defer r.Close()
+   var msgs []*pb.CloudEvent
    for {
-      msg, err = rs.Read()
+      msgs, err = r.Read()
       if err != nil {
          break
       }
-      fmt.Printf("subscription %s - received the next message: %+v\n", subId, msg)
+      fmt.Printf("subscription %s - received the next messages batch: %+v\n", subId, msgs)
    }
    if err != nil {
       panic(err)

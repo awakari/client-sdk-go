@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/awakari/client-sdk-go/api/grpc/limits"
-	"github.com/awakari/client-sdk-go/api/grpc/messages"
 	"github.com/awakari/client-sdk-go/api/grpc/permits"
+	"github.com/awakari/client-sdk-go/api/grpc/reader"
 	"github.com/awakari/client-sdk-go/api/grpc/subscriptions"
 	"github.com/awakari/client-sdk-go/api/grpc/writer"
 	"github.com/awakari/client-sdk-go/model"
@@ -30,11 +30,11 @@ type Client interface {
 
 	// Messages
 
-	// WriteMessages opens the stream for publishing the messages.
-	WriteMessages(ctx context.Context, userId string) (ws model.WriteStream[*pb.CloudEvent], err error)
+	// OpenMessagesWriter opens the batch message writer. A client should close it once done.
+	OpenMessagesWriter(ctx context.Context, userId string) (w model.Writer[*pb.CloudEvent], err error)
 
-	// ReadMessages opens the stream for receiving the messages matching the requested subscription.
-	ReadMessages(ctx context.Context, userId, subId string) (rs model.ReadStream[*pb.CloudEvent], err error)
+	// OpenMessagesReader opens batch message reader. A client should close it once done.
+	OpenMessagesReader(ctx context.Context, userId, subId string, batchSize uint32) (r model.Reader[[]*pb.CloudEvent], err error)
 
 	// Subscriptions
 
@@ -57,12 +57,12 @@ type Client interface {
 
 type client struct {
 	connLimits  *grpc.ClientConn
-	connMsgs    *grpc.ClientConn
+	connReader  *grpc.ClientConn
 	connPermits *grpc.ClientConn
 	connSubs    *grpc.ClientConn
 	connWriter  *grpc.ClientConn
 	svcLimits   limits.Service
-	svcMsgs     messages.Service
+	svcReader   reader.Service
 	svcPermits  permits.Service
 	svcSubs     subscriptions.Service
 	svcWriter   writer.Service
@@ -70,14 +70,12 @@ type client struct {
 
 var ErrApiDisabled = errors.New("the API call is not enabled for this client")
 
-var _ Client = (*client)(nil)
-
 func (c client) Close() (err error) {
 	if c.connLimits != nil {
 		err = errors.Join(err, c.connLimits.Close())
 	}
-	if c.connMsgs != nil {
-		err = errors.Join(err, c.connMsgs.Close())
+	if c.connReader != nil {
+		err = errors.Join(err, c.connReader.Close())
 	}
 	if c.connPermits != nil {
 		err = errors.Join(err, c.connPermits.Close())
@@ -109,20 +107,20 @@ func (c client) ReadUsageLimit(ctx context.Context, userId string, subj usage.Su
 	return
 }
 
-func (c client) WriteMessages(ctx context.Context, userId string) (ws model.WriteStream[*pb.CloudEvent], err error) {
+func (c client) OpenMessagesWriter(ctx context.Context, userId string) (ws model.Writer[*pb.CloudEvent], err error) {
 	if c.svcWriter == nil {
-		err = fmt.Errorf("%w: WriteMessages(...)", ErrApiDisabled)
+		err = fmt.Errorf("%w: OpenMessagesWriter(...)", ErrApiDisabled)
 	} else {
-		ws, err = c.svcWriter.OpenStream(ctx, userId)
+		ws, err = c.svcWriter.OpenWriter(ctx, userId)
 	}
 	return
 }
 
-func (c client) ReadMessages(ctx context.Context, userId, subId string) (rs model.ReadStream[*pb.CloudEvent], err error) {
-	if c.svcMsgs == nil {
-		err = fmt.Errorf("%w: ReadMessages(...)", ErrApiDisabled)
+func (c client) OpenMessagesReader(ctx context.Context, userId, subId string, batchSize uint32) (rs model.Reader[[]*pb.CloudEvent], err error) {
+	if c.svcReader == nil {
+		err = fmt.Errorf("%w: OpenMessagesReader(...)", ErrApiDisabled)
 	} else {
-		rs, err = c.svcMsgs.Read(ctx, userId, subId)
+		rs, err = c.svcReader.OpenReader(ctx, userId, subId, batchSize)
 	}
 	return
 }
