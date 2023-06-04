@@ -87,10 +87,10 @@ func TestPublicApiUsage(t *testing.T) {
 	assert.Equal(t, usageSubsStart.CountTotal+1, usageSubs.CountTotal)
 
 	// Open a Read Stream
-	var rs model.ReadStream[*pb.CloudEvent]
-	rs, err = client.ReadMessages(ctx, userId, subId)
+	var r model.Reader[[]*pb.CloudEvent]
+	r, err = client.OpenMessagesReader(ctx, userId, subId, 16)
 	assert.Nil(t, err)
-	defer rs.Close()
+	defer r.Close()
 
 	// Get the initial Publish Messages API Usage
 	var usagePubMsgsStart usage.Usage
@@ -98,10 +98,10 @@ func TestPublicApiUsage(t *testing.T) {
 	assert.Nil(t, err)
 
 	// Write a Message
-	var ws model.WriteStream[*pb.CloudEvent]
-	ws, err = client.WriteMessages(ctx, userId)
+	var w model.Writer[*pb.CloudEvent]
+	w, err = client.OpenMessagesWriter(ctx, userId)
 	assert.Nil(t, err)
-	defer ws.Close()
+	defer w.Close()
 	msgSend := &pb.CloudEvent{
 		Id:          uuid.NewString(),
 		Source:      "http://arxiv.org/abs/2305.06364",
@@ -129,7 +129,7 @@ func TestPublicApiUsage(t *testing.T) {
 		},
 	}
 	var writtenCount uint32
-	writtenCount, err = ws.WriteBatch([]*pb.CloudEvent{msgSend})
+	writtenCount, err = w.WriteBatch([]*pb.CloudEvent{msgSend})
 	assert.Equal(t, uint32(1), writtenCount)
 	assert.Nil(t, err)
 
@@ -141,11 +141,12 @@ func TestPublicApiUsage(t *testing.T) {
 	assert.Equal(t, usagePubMsgsStart.CountTotal+1, usagePubMsgs.CountTotal)
 
 	// Read the Message by the Subscription
-	var msgRead *pb.CloudEvent
-	msgRead, err = rs.Read()
+	var msgsRead []*pb.CloudEvent
+	msgsRead, err = r.Read()
 	assert.Nil(t, err)
 	if err == nil {
-		assert.Equal(t, msgSend.Id, msgRead.Id)
+		assert.Equal(t, 1, len(msgsRead))
+		assert.Equal(t, msgSend.Id, msgsRead[0].Id)
 	}
 
 	// Delete the Subscription to clean up
@@ -173,16 +174,16 @@ func TestInternalWriter(t *testing.T) {
 	var err error
 	client, err = api.
 		NewClientBuilder().
-		WriteUri(apiUri).
+		WriterUri(apiUri).
 		Build()
 	require.Nil(t, err)
 	defer client.Close()
 
 	// Write a Message
-	var ws model.WriteStream[*pb.CloudEvent]
-	ws, err = client.WriteMessages(ctx, userId)
+	var w model.Writer[*pb.CloudEvent]
+	w, err = client.OpenMessagesWriter(ctx, userId)
 	assert.Nil(t, err)
-	defer ws.Close()
+	defer w.Close()
 	msgSend := &pb.CloudEvent{
 		Id:          uuid.NewString(),
 		Source:      "http://arxiv.org/abs/2305.06364",
@@ -210,7 +211,7 @@ func TestInternalWriter(t *testing.T) {
 		},
 	}
 	var writtenCount uint32
-	writtenCount, err = ws.WriteBatch([]*pb.CloudEvent{msgSend})
+	writtenCount, err = w.WriteBatch([]*pb.CloudEvent{msgSend})
 	assert.Equal(t, uint32(1), writtenCount)
 	assert.Nil(t, err)
 }

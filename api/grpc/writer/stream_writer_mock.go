@@ -6,18 +6,18 @@ import (
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
 )
 
-type writeStreamMock struct {
+type streamWriterMock struct {
 }
 
-func newWriteStreamMock() model.WriteStream[*pb.CloudEvent] {
-	return writeStreamMock{}
+func newStreamWriterMock() model.Writer[*pb.CloudEvent] {
+	return streamWriterMock{}
 }
 
-func (w writeStreamMock) Close() error {
+func (w streamWriterMock) Close() error {
 	return nil
 }
 
-func (w writeStreamMock) WriteBatch(msgs []*pb.CloudEvent) (ackCount uint32, err error) {
+func (w streamWriterMock) WriteBatch(msgs []*pb.CloudEvent) (ackCount uint32, err error) {
 	for _, msg := range msgs {
 		switch msg.Id {
 		case "fail":

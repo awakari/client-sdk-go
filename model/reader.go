@@ -4,7 +4,7 @@ import (
 	"io"
 )
 
-type ReadStream[T any] interface {
+type Reader[T any] interface {
 	io.Closer
 	Read() (item T, err error)
 }

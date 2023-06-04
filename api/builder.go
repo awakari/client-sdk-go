@@ -4,8 +4,8 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"github.com/awakari/client-sdk-go/api/grpc/limits"
-	"github.com/awakari/client-sdk-go/api/grpc/messages"
 	"github.com/awakari/client-sdk-go/api/grpc/permits"
+	"github.com/awakari/client-sdk-go/api/grpc/reader"
 	"github.com/awakari/client-sdk-go/api/grpc/subscriptions"
 	"github.com/awakari/client-sdk-go/api/grpc/writer"
 	"google.golang.org/grpc"
@@ -28,17 +28,17 @@ type ClientBuilder interface {
 	// Enables additionally the API methods to read the usage limits and permits.
 	ApiUri(apiUri string) ClientBuilder
 
-	// ReadUri sets the Awakari messages reading API URI. Overrides any value set by ApiUri.
+	// ReaderUri sets the Awakari messages reading API URI. Overrides any value set by ApiUri.
 	// Useful when the specific message reading API is needed by the client.
-	ReadUri(readUri string) ClientBuilder
+	ReaderUri(readerUri string) ClientBuilder
 
 	// SubscriptionsUri sets the Awakari subscriptions API URI. Overrides any value set by ApiUri.
 	// Useful when the specific subscriptions management API is needed by the client.
 	SubscriptionsUri(subsUri string) ClientBuilder
 
-	// WriteUri sets the Awakari messages publishing API URI. Overrides any value set by ApiUri.
+	// WriterUri sets the Awakari messages publishing API URI. Overrides any value set by ApiUri.
 	// Useful when the specific message publishing API is needed by the client.
-	WriteUri(writeUri string) ClientBuilder
+	WriterUri(writerUri string) ClientBuilder
 
 	// Build instantiates the Client instance and returns it.
 	Build() (c Client, err error)
@@ -49,9 +49,9 @@ type builder struct {
 	clientCrt []byte
 	clientKey []byte
 	apiUri    string
-	readUri   string
+	readerUri string
 	subsUri   string
-	writeUri  string
+	writerUri string
 }
 
 func NewClientBuilder() ClientBuilder {
@@ -74,8 +74,8 @@ func (b *builder) ApiUri(apiUri string) ClientBuilder {
 	return b
 }
 
-func (b *builder) ReadUri(readUri string) ClientBuilder {
-	b.readUri = readUri
+func (b *builder) ReaderUri(readerUri string) ClientBuilder {
+	b.readerUri = readerUri
 	return b
 }
 
@@ -84,8 +84,8 @@ func (b *builder) SubscriptionsUri(subsUri string) ClientBuilder {
 	return b
 }
 
-func (b *builder) WriteUri(writeUri string) ClientBuilder {
-	b.writeUri = writeUri
+func (b *builder) WriterUri(writerUri string) ClientBuilder {
+	b.writerUri = writerUri
 	return b
 }
 
@@ -124,16 +124,16 @@ func (b *builder) Build() (c Client, err error) {
 		svcLimits = limits.NewService(clientLimits)
 	}
 	//
-	var connMsgs *grpc.ClientConn
-	if b.readUri != "" {
-		connMsgs, err = grpc.Dial(b.readUri, optsDial...)
+	var connReader *grpc.ClientConn
+	if b.readerUri != "" {
+		connReader, err = grpc.Dial(b.readerUri, optsDial...)
 	} else if b.apiUri != "" {
-		connMsgs, err = grpc.Dial(b.apiUri, optsDial...)
+		connReader, err = grpc.Dial(b.apiUri, optsDial...)
 	}
-	var svcMsgs messages.Service
-	if connMsgs != nil {
-		clientMsgs := messages.NewServiceClient(connMsgs)
-		svcMsgs = messages.NewService(clientMsgs)
+	var svcReader reader.Service
+	if connReader != nil {
+		clientReader := reader.NewServiceClient(connReader)
+		svcReader = reader.NewService(clientReader)
 	}
 	//
 	var connPermits *grpc.ClientConn
@@ -157,8 +157,8 @@ func (b *builder) Build() (c Client, err error) {
 	}
 	//
 	var connWriter *grpc.ClientConn
-	if b.writeUri != "" {
-		connWriter, err = grpc.Dial(b.writeUri, optsDial...)
+	if b.writerUri != "" {
+		connWriter, err = grpc.Dial(b.writerUri, optsDial...)
 	} else if b.apiUri != "" {
 		connWriter, err = grpc.Dial(b.apiUri, optsDial...)
 	}
@@ -170,12 +170,12 @@ func (b *builder) Build() (c Client, err error) {
 	//
 	c = client{
 		connLimits:  connLimits,
-		connMsgs:    connMsgs,
+		connReader:  connReader,
 		connPermits: connPermits,
 		connSubs:    connSubs,
 		connWriter:  connWriter,
 		svcLimits:   svcLimits,
-		svcMsgs:     svcMsgs,
+		svcReader:   svcReader,
 		svcPermits:  svcPermits,
 		svcSubs:     svcSubs,
 		svcWriter:   svcWriter,

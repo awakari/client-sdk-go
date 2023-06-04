@@ -6,10 +6,12 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"io"
 )
 
 type streamMock struct {
 	lastReqMsgs []*pb.CloudEvent
+	err         error
 }
 
 func newStreamMock() Service_SubmitMessagesClient {
@@ -17,27 +19,36 @@ func newStreamMock() Service_SubmitMessagesClient {
 }
 
 func (sm *streamMock) Send(req *SubmitMessagesRequest) (err error) {
-	sm.lastReqMsgs = req.Msgs
+	switch sm.err {
+	case nil:
+		sm.lastReqMsgs = req.Msgs
+	default:
+		err = io.EOF
+	}
 	return
 }
 
 func (sm *streamMock) Recv() (resp *SubmitMessagesResponse, err error) {
 	resp = &SubmitMessagesResponse{}
-	for _, msg := range sm.lastReqMsgs {
-		switch msg.Id {
-		case "fail":
-			err = status.Error(codes.Internal, "internal failure")
-		case "fail_auth":
-			err = status.Error(codes.Unauthenticated, "authentication failure")
-		case "limit_reached":
-			err = status.Error(codes.ResourceExhausted, "usage limit reached")
+	switch sm.err {
+	case nil:
+		for _, msg := range sm.lastReqMsgs {
+			switch msg.Id {
+			case "fail":
+				sm.err = status.Error(codes.Internal, "internal failure")
+			case "fail_auth":
+				sm.err = status.Error(codes.Unauthenticated, "authentication failure")
+			case "limit_reached":
+				sm.err = status.Error(codes.ResourceExhausted, "usage limit reached")
+			default:
+				resp.AckCount++
+			}
+			if sm.err != nil {
+				break
+			}
 		}
-		if err == nil {
-			resp.AckCount++
-		} else {
-			resp.Err = err.Error()
-			break
-		}
+	default:
+		err = sm.err
 	}
 	return
 }

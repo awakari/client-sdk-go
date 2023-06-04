@@ -14,7 +14,7 @@ func NewServiceMock() Service {
 	return serviceMock{}
 }
 
-func (sm serviceMock) OpenStream(ctx context.Context, userId string) (ws model.WriteStream[*pb.CloudEvent], err error) {
+func (sm serviceMock) OpenWriter(ctx context.Context, userId string) (ws model.Writer[*pb.CloudEvent], err error) {
 	switch userId {
 	case "fail":
 		err = ErrInternal
@@ -22,7 +22,7 @@ func (sm serviceMock) OpenStream(ctx context.Context, userId string) (ws model.W
 		err = auth.ErrAuth
 	}
 	if err == nil {
-		ws = newWriteStreamMock()
+		ws = newStreamWriterMock()
 	}
 	return
 }

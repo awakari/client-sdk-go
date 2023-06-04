@@ -4,8 +4,8 @@ import (
 	"context"
 	"github.com/awakari/client-sdk-go/api/grpc/auth"
 	"github.com/awakari/client-sdk-go/api/grpc/limits"
-	"github.com/awakari/client-sdk-go/api/grpc/messages"
 	"github.com/awakari/client-sdk-go/api/grpc/permits"
+	"github.com/awakari/client-sdk-go/api/grpc/reader"
 	"github.com/awakari/client-sdk-go/api/grpc/subject"
 	"github.com/awakari/client-sdk-go/api/grpc/subscriptions"
 	"github.com/awakari/client-sdk-go/api/grpc/writer"
@@ -142,62 +142,97 @@ func TestClient_ReadUsageLimit(t *testing.T) {
 
 func TestClient_ReadMessages(t *testing.T) {
 	cases := map[string]struct {
-		svcMsgs messages.Service
-		subId   string
-		msg     *pb.CloudEvent
-		err0    error
-		err1    error
+		svcReader reader.Service
+		subId     string
+		batchSize uint32
+		msgs      []*pb.CloudEvent
+		err0      error
+		err1      error
 	}{
 		"ok": {
-			svcMsgs: messages.NewServiceMock(),
-			subId:   "sub0",
-			msg: &pb.CloudEvent{
-				Id:          "msg0",
-				Source:      "source0",
-				SpecVersion: "specversion0",
-				Type:        "type0",
-				Attributes:  map[string]*pb.CloudEventAttributeValue{},
-				Data: &pb.CloudEvent_TextData{
-					TextData: "data",
+			svcReader: reader.NewServiceMock(),
+			subId:     "sub0",
+			batchSize: 3,
+			msgs: []*pb.CloudEvent{
+				{
+					Id:          "msg0",
+					Source:      "source0",
+					SpecVersion: "specversion0",
+					Type:        "type0",
+					Attributes:  map[string]*pb.CloudEventAttributeValue{},
+					Data: &pb.CloudEvent_TextData{
+						TextData: "data",
+					},
+				},
+				{
+					Id:          "msg1",
+					Source:      "source0",
+					SpecVersion: "specversion0",
+					Type:        "type0",
+					Attributes:  map[string]*pb.CloudEventAttributeValue{},
+					Data: &pb.CloudEvent_TextData{
+						TextData: "data",
+					},
+				},
+				{
+					Id:          "msg2",
+					Source:      "source0",
+					SpecVersion: "specversion0",
+					Type:        "type0",
+					Attributes:  map[string]*pb.CloudEventAttributeValue{},
+					Data: &pb.CloudEvent_TextData{
+						TextData: "data",
+					},
 				},
 			},
 		},
 		"api disabled": {
-			subId: "sub0",
-			err0:  ErrApiDisabled,
+			subId:     "sub0",
+			batchSize: 3,
+			err0:      ErrApiDisabled,
 		},
 		"fail": {
-			svcMsgs: messages.NewServiceMock(),
-			subId:   "fail",
-			err0:    messages.ErrInternal,
+			svcReader: reader.NewServiceMock(),
+			subId:     "fail",
+			batchSize: 3,
+			err0:      reader.ErrInternal,
 		},
 		"fail auth": {
-			svcMsgs: messages.NewServiceMock(),
-			subId:   "fail_auth",
-			err0:    auth.ErrAuth,
+			svcReader: reader.NewServiceMock(),
+			subId:     "fail_auth",
+			batchSize: 3,
+			err0:      auth.ErrAuth,
 		},
 		"fail read": {
-			svcMsgs: messages.NewServiceMock(),
-			subId:   "fail_read",
-			err1:    messages.ErrInternal,
+			svcReader: reader.NewServiceMock(),
+			subId:     "fail_read",
+			batchSize: 3,
+			err1:      reader.ErrInternal,
 		},
 		"sub missing": {
-			svcMsgs: messages.NewServiceMock(),
-			subId:   "missing",
-			err1:    messages.ErrNotFound,
+			svcReader: reader.NewServiceMock(),
+			subId:     "missing",
+			batchSize: 3,
+			err0:      reader.ErrNotFound,
+		},
+		"invalid batch size": {
+			svcReader: reader.NewServiceMock(),
+			subId:     "sub0",
+			batchSize: 0,
+			err1:      reader.ErrInvalidRequest,
 		},
 	}
 	for k, c := range cases {
 		t.Run(k, func(t *testing.T) {
 			cl := client{
-				svcMsgs: c.svcMsgs,
+				svcReader: c.svcReader,
 			}
-			rs, err := cl.ReadMessages(context.TODO(), "user0", c.subId)
+			rs, err := cl.OpenMessagesReader(context.TODO(), "user0", c.subId, c.batchSize)
 			assert.ErrorIs(t, err, c.err0)
 			if err == nil {
-				var msg *pb.CloudEvent
-				msg, err = rs.Read()
-				assert.Equal(t, c.msg, msg)
+				var msgs []*pb.CloudEvent
+				msgs, err = rs.Read()
+				assert.Equal(t, c.msgs, msgs)
 				assert.ErrorIs(t, err, c.err1)
 				assert.Nil(t, rs.Close())
 			}
@@ -282,7 +317,7 @@ func TestClient_WriteMessages(t *testing.T) {
 			cl := client{
 				svcWriter: c.svcWriter,
 			}
-			ws, err := cl.WriteMessages(context.TODO(), c.userId)
+			ws, err := cl.OpenMessagesWriter(context.TODO(), c.userId)
 			assert.ErrorIs(t, err, c.err0)
 			if err == nil {
 				var ackCount uint32
