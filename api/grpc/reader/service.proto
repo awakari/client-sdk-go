@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package awakari.messages;
+package awakari.reader;
 
 option go_package = "api/grpc/reader";
 
