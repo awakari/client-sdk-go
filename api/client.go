@@ -44,8 +44,8 @@ type Client interface {
 	// ReadSubscription specified by the id. Returns ErrNotFound if subscription is missing.
 	ReadSubscription(ctx context.Context, userId, subId string) (subData subscription.Data, err error)
 
-	// UpdateSubscriptionMetadata updates the mutable part of the subscription.Data
-	UpdateSubscriptionMetadata(ctx context.Context, userId, subId string, md subscription.Metadata) (err error)
+	// UpdateSubscription replaces the existing subscription.Data fields.
+	UpdateSubscription(ctx context.Context, userId, subId string, subData subscription.Data) (err error)
 
 	// DeleteSubscription and all associated conditions those not in use by any other subscription.
 	// Returns ErrNotFound if a subscription with the specified id is missing.
@@ -143,11 +143,11 @@ func (c client) ReadSubscription(ctx context.Context, userId, subId string) (sub
 	return
 }
 
-func (c client) UpdateSubscriptionMetadata(ctx context.Context, userId, subId string, md subscription.Metadata) (err error) {
+func (c client) UpdateSubscription(ctx context.Context, userId, subId string, subData subscription.Data) (err error) {
 	if c.svcSubs == nil {
-		err = fmt.Errorf("%w: UpdateSubscriptionMetadata(...)", ErrApiDisabled)
+		err = fmt.Errorf("%w: UpdateSubscription(...)", ErrApiDisabled)
 	} else {
-		err = c.svcSubs.UpdateMetadata(ctx, userId, subId, md)
+		err = c.svcSubs.Update(ctx, userId, subId, subData)
 	}
 	return
 }

@@ -21,78 +21,56 @@ func TestService_Create(t *testing.T) {
 	}{
 		"invalid": {
 			req: subscription.Data{
-				Metadata: subscription.Metadata{
-					Description: "invalid",
-				},
-				Condition: condition.NewKiwiTreeCondition(
-					condition.NewKiwiCondition(
-						condition.NewKeyCondition(condition.NewCondition(false), "key0"),
-						false,
-						"ok",
-					),
+				Description: "invalid",
+				Condition: condition.NewTextCondition(
+					condition.NewKeyCondition(condition.NewCondition(false), "key0"),
+					"ok",
 				),
 			},
 			err: ErrInvalid,
 		},
 		"locked": {
 			req: subscription.Data{
-				Metadata: subscription.Metadata{
-					Description: "busy",
-				},
-				Condition: condition.NewKiwiTreeCondition(
-					condition.NewKiwiCondition(
-						condition.NewKeyCondition(condition.NewCondition(false), ""),
-						false,
-						"locked",
-					),
+				Description: "busy",
+				Condition: condition.NewTextCondition(
+					condition.NewKeyCondition(condition.NewCondition(false), ""),
+					"locked",
 				),
 			},
 			err: ErrBusy,
 		},
 		"fail": {
 			req: subscription.Data{
-				Metadata: subscription.Metadata{
-					Description: "fail",
-				},
-				Condition: condition.NewKiwiTreeCondition(
-					condition.NewKiwiCondition(
-						condition.NewKeyCondition(
-							condition.NewCondition(false),
-							"fail",
-						),
-						false,
+				Description: "fail",
+				Condition: condition.NewTextCondition(
+					condition.NewKeyCondition(
+						condition.NewCondition(false),
 						"fail",
 					),
+					"fail",
 				),
 			},
 			err: ErrInternal,
 		},
 		"ok": {
 			req: subscription.Data{
-				Metadata: subscription.Metadata{
-					Description: "my subscription",
-				},
-				Condition: condition.NewKiwiTreeCondition(
-					condition.NewKiwiCondition(
-						condition.NewKeyCondition(condition.NewCondition(false), "key0"),
-						false,
-						"ok",
-					),
+				Description: "my subscription",
+				Condition: condition.NewTextCondition(
+					condition.NewKeyCondition(condition.NewCondition(false), "key0"),
+					"ok",
 				),
 			},
 		},
 		"ok group": {
 			req: subscription.Data{
-				Metadata: subscription.Metadata{
-					Description: "my subscription",
-				},
+				Description: "my subscription",
 				Condition: condition.
 					NewBuilder().
 					GroupChildren(
 						[]condition.Condition{
 							condition.
 								NewBuilder().
-								BuildKiwiTreeCondition(),
+								BuildTextCondition(),
 						},
 					).
 					BuildGroupCondition(),
@@ -100,30 +78,20 @@ func TestService_Create(t *testing.T) {
 		},
 		"auth fail": {
 			req: subscription.Data{
-				Metadata: subscription.Metadata{
-					Description: "fail_auth",
-				},
-				Condition: condition.NewKiwiTreeCondition(
-					condition.NewKiwiCondition(
-						condition.NewKeyCondition(condition.NewCondition(false), "key0"),
-						false,
-						"ok",
-					),
+				Description: "fail_auth",
+				Condition: condition.NewTextCondition(
+					condition.NewKeyCondition(condition.NewCondition(false), "key0"),
+					"ok",
 				),
 			},
 			err: auth.ErrAuth,
 		},
 		"limit reached": {
 			req: subscription.Data{
-				Metadata: subscription.Metadata{
-					Description: "limit_reached",
-				},
-				Condition: condition.NewKiwiTreeCondition(
-					condition.NewKiwiCondition(
-						condition.NewKeyCondition(condition.NewCondition(false), "key0"),
-						false,
-						"ok",
-					),
+				Description: "limit_reached",
+				Condition: condition.NewTextCondition(
+					condition.NewKeyCondition(condition.NewCondition(false), "key0"),
+					"ok",
 				),
 			},
 			err: limits.ErrReached,
@@ -164,10 +132,8 @@ func TestService_Read(t *testing.T) {
 		},
 		"ok": {
 			sd: subscription.Data{
-				Metadata: subscription.Metadata{
-					Description: "subscription",
-					Enabled:     true,
-				},
+				Description: "subscription",
+				Enabled:     true,
 				Condition: condition.
 					NewBuilder().
 					GroupLogic(condition.GroupLogicOr).
@@ -177,14 +143,13 @@ func TestService_Read(t *testing.T) {
 								NewBuilder().
 								Negation().
 								MatchAttrKey("k0").
-								MatchAttrValuePattern("p0").
-								BuildKiwiTreeCondition(),
+								MatchText("p0").
+								BuildTextCondition(),
 							condition.
 								NewBuilder().
 								MatchAttrKey("k1").
-								MatchAttrValuePattern("p1").
-								MatchAttrValuePartial().
-								BuildKiwiTreeCondition(),
+								MatchText("p1").
+								BuildTextCondition(),
 						},
 					).
 					BuildGroupCondition(),
@@ -199,7 +164,8 @@ func TestService_Read(t *testing.T) {
 			sd, err := svc.Read(ctx, "user0", id)
 			if c.err == nil {
 				assert.Nil(t, err)
-				assert.Equal(t, c.sd.Metadata, sd.Metadata)
+				assert.Equal(t, c.sd.Description, sd.Description)
+				assert.Equal(t, c.sd.Enabled, sd.Enabled)
 				assert.True(t, conditionsDataEqual(c.sd.Condition, sd.Condition))
 			} else {
 				assert.ErrorIs(t, err, c.err)
@@ -208,14 +174,14 @@ func TestService_Read(t *testing.T) {
 	}
 }
 
-func TestService_UpdateMetadata(t *testing.T) {
+func TestService_Update(t *testing.T) {
 	//
 	svc := NewService(newClientMock())
 	//
 	cases := map[string]struct {
 		id  string
 		err error
-		md  subscription.Metadata
+		sd  subscription.Data
 	}{
 		"not found": {
 			id:  "missing",
@@ -223,7 +189,7 @@ func TestService_UpdateMetadata(t *testing.T) {
 		},
 		"ok": {
 			id: "sub0",
-			md: subscription.Metadata{
+			sd: subscription.Data{
 				Description: "my subscription",
 				Enabled:     false,
 			},
@@ -242,7 +208,7 @@ func TestService_UpdateMetadata(t *testing.T) {
 		t.Run(k, func(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 			defer cancel()
-			err := svc.UpdateMetadata(ctx, "user0", c.id, c.md)
+			err := svc.Update(ctx, "user0", c.id, c.sd)
 			if c.err == nil {
 				assert.Nil(t, err)
 			} else {
@@ -349,17 +315,17 @@ func conditionsDataEqual(a, b condition.Condition) (equal bool) {
 						}
 					}
 				}
-			case condition.KiwiCondition:
+			case condition.TextCondition:
 				equal = false
 			default:
 				equal = false
 			}
-		case condition.KiwiCondition:
+		case condition.TextCondition:
 			switch bt := b.(type) {
 			case condition.GroupCondition:
 				equal = false
-			case condition.KiwiCondition:
-				equal = at.IsPartial() == bt.IsPartial() && at.GetKey() == bt.GetKey() && at.GetPattern() == bt.GetPattern()
+			case condition.TextCondition:
+				equal = at.GetKey() == bt.GetKey() && at.GetTerm() == bt.GetTerm()
 			default:
 				equal = false
 			}

@@ -276,24 +276,21 @@ func main() {
    var subId string
    var err error
    subData := subscription.Data{
-      Metadata: subscription.Metadata{
-         Description: "my subscription",
-         Enabled:     true,
-      },
+      Description: "my subscription",
+	  Enabled:     true,
       Condition: condition.NewBuilder().
          MatchAttrKey("tags").
-         MatchAttrValuePattern("SpaceX").
-         MatchAttrValuePartial().
-         BuildKiwiTreeCondition(),
+         MatchText("SpaceX").
+         BuildTextCondition(),
    }
    subId, err = client.CreateSubscription(ctx, userId, subData)
    
    // Update the subscription mutable fields
-   md := subscription.Metadata{
+   upd := subscription.Data{
       Description: "my disabled subscription",
       Enabled:     false,
    }
-   err = client.UpdateSubscriptionMetadata(ctx, userId, subId, md)
+   err = client.UpdateSubscriptionMetadata(ctx, userId, subId, upd)
    
    // Delete the subscription
    err = client.DeleteSubscription(ctx, userId, subId)
