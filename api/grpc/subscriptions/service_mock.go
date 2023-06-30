@@ -16,7 +16,7 @@ func NewServiceMock() Service {
 }
 
 func (sm serviceMock) Create(ctx context.Context, userId string, subData subscription.Data) (id string, err error) {
-	switch subData.Metadata.Description {
+	switch subData.Description {
 	case "fail":
 		err = ErrInternal
 	case "fail_auth":
@@ -42,16 +42,16 @@ func (sm serviceMock) Read(ctx context.Context, userId, subId string) (subData s
 	case "missing":
 		err = ErrNotFound
 	default:
-		subData.Metadata.Description = "my subscription"
-		subData.Metadata.Enabled = true
+		subData.Description = "my subscription"
+		subData.Enabled = true
 		subData.Condition = condition.
 			NewBuilder().
-			BuildKiwiTreeCondition()
+			BuildTextCondition()
 	}
 	return
 }
 
-func (sm serviceMock) UpdateMetadata(ctx context.Context, userId, subId string, md subscription.Metadata) (err error) {
+func (sm serviceMock) Update(ctx context.Context, userId, subId string, subData subscription.Data) (err error) {
 	switch subId {
 	case "fail":
 		err = ErrInternal

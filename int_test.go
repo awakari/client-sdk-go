@@ -65,15 +65,12 @@ func TestPublicApiUsage(t *testing.T) {
 
 	// Create a Subscription
 	subData := subscription.Data{
-		Metadata: subscription.Metadata{
-			Description: "test subscription 0",
-			Enabled:     true,
-		},
+		Description: "test subscription 0",
+		Enabled:     true,
 		Condition: condition.NewBuilder().
 			MatchAttrKey("tags").
-			MatchAttrValuePattern("neutrino").
-			MatchAttrValuePartial().
-			BuildKiwiTreeCondition(),
+			MatchText("Neutrino").
+			BuildTextCondition(),
 	}
 	var subId string
 	subId, err = client.CreateSubscription(ctx, userId, subData)

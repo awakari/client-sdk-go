@@ -20,8 +20,8 @@ type Service interface {
 	// Read returns the subscription specified by the id. Returns ErrNotFound if subscription is missing.
 	Read(ctx context.Context, userId, subId string) (subData subscription.Data, err error)
 
-	// UpdateMetadata updates the mutable part of the subscription.Data
-	UpdateMetadata(ctx context.Context, userId, subId string, md subscription.Metadata) (err error)
+	// Update the mutable part of the subscription.Data
+	Update(ctx context.Context, userId, subId string, subData subscription.Data) (err error)
 
 	// Delete the specified subscription all associated conditions those not in use by any other subscription.
 	// Returns ErrNotFound if a subscription with the specified id is missing.
@@ -56,8 +56,9 @@ func NewService(client ServiceClient) Service {
 func (svc service) Create(ctx context.Context, userId string, subData subscription.Data) (id string, err error) {
 	ctx = auth.SetOutgoingAuthInfo(ctx, userId)
 	req := CreateRequest{
-		Md:   encodeMetadata(subData.Metadata),
-		Cond: encodeCondition(subData.Condition),
+		Cond:        encodeCondition(subData.Condition),
+		Description: subData.Description,
+		Enabled:     subData.Enabled,
 	}
 	var resp *CreateResponse
 	resp, err = svc.client.Create(ctx, &req)
@@ -77,22 +78,21 @@ func (svc service) Read(ctx context.Context, userId, subId string) (subData subs
 	resp, err = svc.client.Read(ctx, &req)
 	err = decodeError(err)
 	if err == nil {
-		subData.Metadata = subscription.Metadata{
-			Description: resp.Md.Description,
-			Enabled:     resp.Md.Enabled,
-		}
 		subData.Condition, err = decodeCondition(resp.Cond)
+		subData.Description = resp.Description
+		subData.Enabled = resp.Enabled
 	}
 	return
 }
 
-func (svc service) UpdateMetadata(ctx context.Context, userId, subId string, md subscription.Metadata) (err error) {
+func (svc service) Update(ctx context.Context, userId, subId string, data subscription.Data) (err error) {
 	ctx = auth.SetOutgoingAuthInfo(ctx, userId)
-	req := UpdateMetadataRequest{
-		Id: subId,
-		Md: encodeMetadata(md),
+	req := UpdateRequest{
+		Id:          subId,
+		Description: data.Description,
+		Enabled:     data.Enabled,
 	}
-	_, err = svc.client.UpdateMetadata(ctx, &req)
+	_, err = svc.client.Update(ctx, &req)
 	err = decodeError(err)
 	return
 }
@@ -122,14 +122,6 @@ func (svc service) SearchOwn(ctx context.Context, userId string, limit uint32, c
 	return
 }
 
-func encodeMetadata(src subscription.Metadata) (dst *Metadata) {
-	dst = &Metadata{
-		Description: src.Description,
-		Enabled:     src.Enabled,
-	}
-	return
-}
-
 func encodeCondition(src condition.Condition) (dst *ConditionInput) {
 	dst = &ConditionInput{
 		Not: src.IsNot(),
@@ -147,12 +139,11 @@ func encodeCondition(src condition.Condition) (dst *ConditionInput) {
 				Group: dstGroup,
 			},
 		}
-	case condition.KiwiTreeCondition:
-		dst.Cond = &ConditionInput_Ktc{
-			Ktc: &KiwiTreeConditionInput{
-				Key:     c.GetKey(),
-				Pattern: c.GetPattern(),
-				Partial: c.IsPartial(),
+	case condition.TextCondition:
+		dst.Cond = &ConditionInput_Tc{
+			Tc: &TextConditionInput{
+				Key:  c.GetKey(),
+				Term: c.GetTerm(),
 			},
 		}
 	}
@@ -160,7 +151,7 @@ func encodeCondition(src condition.Condition) (dst *ConditionInput) {
 }
 
 func decodeCondition(src *ConditionOutput) (dst condition.Condition, err error) {
-	gc, ktc := src.GetGc(), src.GetKc()
+	gc, tc := src.GetGc(), src.GetTc()
 	switch {
 	case gc != nil:
 		var group []condition.Condition
@@ -179,13 +170,10 @@ func decodeCondition(src *ConditionOutput) (dst condition.Condition, err error) 
 				group,
 			)
 		}
-	case ktc != nil:
-		dst = condition.NewKiwiTreeCondition(
-			condition.NewKiwiCondition(
-				condition.NewKeyCondition(condition.NewCondition(src.Not), ktc.GetKey()),
-				ktc.GetPartial(),
-				ktc.GetPattern(),
-			),
+	case tc != nil:
+		dst = condition.NewTextCondition(
+			condition.NewKeyCondition(condition.NewCondition(src.Not), tc.GetKey()),
+			tc.GetTerm(),
 		)
 	default:
 		err = fmt.Errorf("%w: unsupported condition type", ErrInternal)

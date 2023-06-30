@@ -5,7 +5,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type clientMock struct{}
@@ -16,7 +15,7 @@ func newClientMock() ServiceClient {
 
 func (cm clientMock) Create(ctx context.Context, req *CreateRequest, opts ...grpc.CallOption) (resp *CreateResponse, err error) {
 	resp = &CreateResponse{}
-	switch req.Md.Description {
+	switch req.Description {
 	case "fail":
 		err = status.Error(codes.Internal, "internal failure")
 	case "fail_auth":
@@ -43,10 +42,8 @@ func (cm clientMock) Read(ctx context.Context, req *ReadRequest, opts ...grpc.Ca
 	case "missing":
 		err = status.Error(codes.NotFound, "subscription not found")
 	default:
-		resp.Md = &Metadata{
-			Description: "subscription",
-			Enabled:     true,
-		}
+		resp.Description = "subscription"
+		resp.Enabled = true
 		resp.Cond = &ConditionOutput{
 			Cond: &ConditionOutput_Gc{
 				Gc: &GroupConditionOutput{
@@ -54,20 +51,18 @@ func (cm clientMock) Read(ctx context.Context, req *ReadRequest, opts ...grpc.Ca
 					Group: []*ConditionOutput{
 						{
 							Not: true,
-							Cond: &ConditionOutput_Kc{
-								Kc: &KiwiConditionOutput{
-									Key:     "k0",
-									Pattern: "p0",
-									Partial: false,
+							Cond: &ConditionOutput_Tc{
+								Tc: &TextConditionOutput{
+									Key:  "k0",
+									Term: "p0",
 								},
 							},
 						},
 						{
-							Cond: &ConditionOutput_Kc{
-								Kc: &KiwiConditionOutput{
-									Key:     "k1",
-									Pattern: "p1",
-									Partial: true,
+							Cond: &ConditionOutput_Tc{
+								Tc: &TextConditionOutput{
+									Key:  "k1",
+									Term: "p1",
 								},
 							},
 						},
@@ -79,8 +74,8 @@ func (cm clientMock) Read(ctx context.Context, req *ReadRequest, opts ...grpc.Ca
 	return
 }
 
-func (cm clientMock) UpdateMetadata(ctx context.Context, req *UpdateMetadataRequest, opts ...grpc.CallOption) (resp *emptypb.Empty, err error) {
-	resp = &emptypb.Empty{}
+func (cm clientMock) Update(ctx context.Context, req *UpdateRequest, opts ...grpc.CallOption) (resp *UpdateResponse, err error) {
+	resp = &UpdateResponse{}
 	switch req.Id {
 	case "fail":
 		err = status.Error(codes.Internal, "internal failure")
@@ -92,8 +87,8 @@ func (cm clientMock) UpdateMetadata(ctx context.Context, req *UpdateMetadataRequ
 	return
 }
 
-func (cm clientMock) Delete(ctx context.Context, req *DeleteRequest, opts ...grpc.CallOption) (resp *emptypb.Empty, err error) {
-	resp = &emptypb.Empty{}
+func (cm clientMock) Delete(ctx context.Context, req *DeleteRequest, opts ...grpc.CallOption) (resp *DeleteResponse, err error) {
+	resp = &DeleteResponse{}
 	switch req.Id {
 	case "fail":
 		err = status.Error(codes.Internal, "internal failure")

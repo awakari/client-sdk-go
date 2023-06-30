@@ -5,11 +5,10 @@ type Builder interface {
 	GroupLogic(l GroupLogic) Builder
 	GroupChildren(children []Condition) Builder
 	MatchAttrKey(k string) Builder
-	MatchAttrValuePattern(p string) Builder
-	MatchAttrValuePartial() Builder
+	MatchText(p string) Builder
 
 	BuildGroupCondition() (c Condition)
-	BuildKiwiTreeCondition() (c Condition)
+	BuildTextCondition() (c Condition)
 }
 
 type builder struct {
@@ -17,7 +16,7 @@ type builder struct {
 	gl      GroupLogic
 	gc      []Condition
 	key     string
-	pattern string
+	term    string
 	partial bool
 }
 
@@ -45,13 +44,8 @@ func (b *builder) MatchAttrKey(k string) Builder {
 	return b
 }
 
-func (b *builder) MatchAttrValuePattern(p string) Builder {
-	b.pattern = p
-	return b
-}
-
-func (b *builder) MatchAttrValuePartial() Builder {
-	b.partial = true
+func (b *builder) MatchText(term string) Builder {
+	b.term = term
 	return b
 }
 
@@ -67,19 +61,16 @@ func (b *builder) BuildGroupCondition() (c Condition) {
 	return
 }
 
-func (b *builder) BuildKiwiTreeCondition() (c Condition) {
+func (b *builder) BuildTextCondition() (c Condition) {
 	c = condition{
 		b.not,
 	}
-	c = kiwiTreeCondition{
-		kiwiCondition{
-			KeyCondition: keyCondition{
-				Condition: c,
-				Key:       b.key,
-			},
-			Partial: b.partial,
-			Pattern: b.pattern,
+	c = textCondition{
+		KeyCondition: keyCondition{
+			Condition: c,
+			Key:       b.key,
 		},
+		Term: b.term,
 	}
 	return
 }

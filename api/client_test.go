@@ -380,9 +380,7 @@ func TestClient_CreateSubscription(t *testing.T) {
 			}
 			ctx := context.TODO()
 			subData := subscription.Data{
-				Metadata: subscription.Metadata{
-					Description: c.descr,
-				},
+				Description: c.descr,
 			}
 			id, err := cl.CreateSubscription(ctx, "user0", subData)
 			assert.Equal(t, c.id, id)
@@ -403,13 +401,11 @@ func TestClient_ReadSubscription(t *testing.T) {
 			svcSubs: subscriptions.NewServiceMock(),
 			subId:   "sub0",
 			subData: subscription.Data{
-				Metadata: subscription.Metadata{
-					Description: "my subscription",
-					Enabled:     true,
-				},
+				Description: "my subscription",
+				Enabled:     true,
 				Condition: condition.
 					NewBuilder().
-					BuildKiwiTreeCondition(),
+					BuildTextCondition(),
 			},
 		},
 		"subs API not set": {
@@ -482,7 +478,7 @@ func TestClient_UpdateSubscriptionMetadata(t *testing.T) {
 				svcSubs: c.svcSubs,
 			}
 			ctx := context.TODO()
-			err := cl.UpdateSubscriptionMetadata(ctx, "user0", c.subId, subscription.Metadata{})
+			err := cl.UpdateSubscription(ctx, "user0", c.subId, subscription.Data{})
 			assert.ErrorIs(t, err, c.err)
 			assert.Nil(t, cl.Close())
 		})
