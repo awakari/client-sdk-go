@@ -61,8 +61,9 @@ func (cm clientMock) Read(ctx context.Context, req *ReadRequest, opts ...grpc.Ca
 						{
 							Cond: &ConditionOutput_Tc{
 								Tc: &TextConditionOutput{
-									Key:  "k1",
-									Term: "p1",
+									Key:   "k1",
+									Term:  "p1",
+									Exact: true,
 								},
 							},
 						},

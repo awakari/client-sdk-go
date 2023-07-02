@@ -4,29 +4,36 @@ type (
 	TextCondition interface {
 		KeyCondition
 		GetTerm() string
+		IsExact() bool
 	}
 
 	textCondition struct {
 		KeyCondition KeyCondition
 		Term         string
+		Exact        bool
 	}
 )
 
-func NewTextCondition(kc KeyCondition, pattern string) TextCondition {
+func NewTextCondition(kc KeyCondition, pattern string, exact bool) TextCondition {
 	return textCondition{
 		KeyCondition: kc,
 		Term:         pattern,
+		Exact:        exact,
 	}
 }
 
-func (kc textCondition) IsNot() bool {
-	return kc.KeyCondition.IsNot()
+func (tc textCondition) IsNot() bool {
+	return tc.KeyCondition.IsNot()
 }
 
-func (kc textCondition) GetKey() string {
-	return kc.KeyCondition.GetKey()
+func (tc textCondition) GetKey() string {
+	return tc.KeyCondition.GetKey()
 }
 
-func (kc textCondition) GetTerm() string {
-	return kc.Term
+func (tc textCondition) GetTerm() string {
+	return tc.Term
+}
+
+func (tc textCondition) IsExact() bool {
+	return tc.Exact
 }

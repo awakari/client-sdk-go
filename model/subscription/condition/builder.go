@@ -1,23 +1,41 @@
 package condition
 
 type Builder interface {
+
+	// Negation makes a resulting Condition negative.
+	// May be set for any resulting Condition type.
 	Negation() Builder
+
+	// GroupLogic defines the logic for a resulting GroupCondition. Default is GroupLogicAnd.
 	GroupLogic(l GroupLogic) Builder
+
+	// GroupChildren defines the nested Condition set for a resulting GroupCondition.
 	GroupChildren(children []Condition) Builder
+
+	// BuildGroupCondition builds a GroupCondition.
+	BuildGroupCondition() (c Condition)
+
+	// MatchAttrKey defines the incoming messages attribute key to match for a resulting KeyCondition.
+	// Default is empty string key. For a TextCondition empty key causes the matching against all attribute keys.
 	MatchAttrKey(k string) Builder
+
+	// MatchText defines the text search terms for a resulting TextCondition.
 	MatchText(p string) Builder
 
-	BuildGroupCondition() (c Condition)
+	// MatchExact enables the exact text matching criteria for a resulting TextCondition.
+	MatchExact() Builder
+
+	// BuildTextCondition builds a TextCondition.
 	BuildTextCondition() (c Condition)
 }
 
 type builder struct {
-	not     bool
-	gl      GroupLogic
-	gc      []Condition
-	key     string
-	term    string
-	partial bool
+	not   bool
+	gl    GroupLogic
+	gc    []Condition
+	key   string
+	term  string
+	exact bool
 }
 
 func NewBuilder() Builder {
@@ -49,6 +67,11 @@ func (b *builder) MatchText(term string) Builder {
 	return b
 }
 
+func (b *builder) MatchExact() Builder {
+	b.exact = true
+	return b
+}
+
 func (b *builder) BuildGroupCondition() (c Condition) {
 	c = condition{
 		Not: b.not,
@@ -70,7 +93,8 @@ func (b *builder) BuildTextCondition() (c Condition) {
 			Condition: c,
 			Key:       b.key,
 		},
-		Term: b.term,
+		Term:  b.term,
+		Exact: b.exact,
 	}
 	return
 }

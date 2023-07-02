@@ -44,6 +44,7 @@ enum GroupLogic {
 message TextConditionInput {
   string key = 1;
   string term = 2;
+  bool exact = 3;
 }
 
 message CreateResponse {
@@ -79,6 +80,7 @@ message TextConditionOutput {
   string id = 1;
   string key = 2;
   string term = 3;
+  bool exact = 4;
 }
 
 // Update

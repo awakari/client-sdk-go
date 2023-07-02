@@ -24,7 +24,7 @@ func TestService_Create(t *testing.T) {
 				Description: "invalid",
 				Condition: condition.NewTextCondition(
 					condition.NewKeyCondition(condition.NewCondition(false), "key0"),
-					"ok",
+					"ok", false,
 				),
 			},
 			err: ErrInvalid,
@@ -34,7 +34,7 @@ func TestService_Create(t *testing.T) {
 				Description: "busy",
 				Condition: condition.NewTextCondition(
 					condition.NewKeyCondition(condition.NewCondition(false), ""),
-					"locked",
+					"locked", false,
 				),
 			},
 			err: ErrBusy,
@@ -47,7 +47,7 @@ func TestService_Create(t *testing.T) {
 						condition.NewCondition(false),
 						"fail",
 					),
-					"fail",
+					"fail", false,
 				),
 			},
 			err: ErrInternal,
@@ -57,7 +57,7 @@ func TestService_Create(t *testing.T) {
 				Description: "my subscription",
 				Condition: condition.NewTextCondition(
 					condition.NewKeyCondition(condition.NewCondition(false), "key0"),
-					"ok",
+					"ok", false,
 				),
 			},
 		},
@@ -81,7 +81,7 @@ func TestService_Create(t *testing.T) {
 				Description: "fail_auth",
 				Condition: condition.NewTextCondition(
 					condition.NewKeyCondition(condition.NewCondition(false), "key0"),
-					"ok",
+					"ok", false,
 				),
 			},
 			err: auth.ErrAuth,
@@ -91,7 +91,7 @@ func TestService_Create(t *testing.T) {
 				Description: "limit_reached",
 				Condition: condition.NewTextCondition(
 					condition.NewKeyCondition(condition.NewCondition(false), "key0"),
-					"ok",
+					"ok", false,
 				),
 			},
 			err: limits.ErrReached,
@@ -149,6 +149,7 @@ func TestService_Read(t *testing.T) {
 								NewBuilder().
 								MatchAttrKey("k1").
 								MatchText("p1").
+								MatchExact().
 								BuildTextCondition(),
 						},
 					).
