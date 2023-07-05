@@ -21,22 +21,14 @@
 # 1. Overview
 
 Reference Awakari SDK for a Golang client.
-It's applicable to work with both:
-* Self-Hosted [Core](https://github.com/awakari/core)
-* Public Cloud
 
 # 2. Security
 
 To secure the Awakari public API usage, the mutual TLS encryption is used together with additional user identity.
 
-> **Note**:
->
-> Mutual TLS is applicable only when connecting to the Awakari Cloud.
-> For the Self-Hosted Core skip the entire Security section. 
+## 2.1. Certificate Authority
 
-## 2.1. Server Public Key
-
-Used to authenticate the Awakari service by the client. A client should fetch it by a public link TODO.
+Used to authenticate the Awakari service by the client. A client should fetch it, for example: [demo instance CA](https://awakari.com/certs/ca-demo.awakari.cloud.crt).
 
 ```go
 package main
@@ -57,7 +49,7 @@ func main() {
    client, err := api.
        NewClientBuilder().
        ...
-       ServerPublicKey(caCrt).
+       CertAuthority(caCrt).
        ...
        Build()
    ...
@@ -143,7 +135,7 @@ func main() {
    }
    client, err := api.
        NewClientBuilder().
-       ServerPublicKey(caCrt).
+       CertAuthority(caCrt).
        ClientKeyPair(clientCrt, clientKey).
        ApiUri("demo.awakari.com:443").
        Build()
@@ -156,11 +148,6 @@ func main() {
 ```
 
 ## 3.1. Limits
-
-> **Note**:
->
-> Usage limits are applicable only when connecting to the Awakari Cloud.
-> For the Self-Hosted Core skip the entire Limits section.
 
 Usage limit represents the successful API call count limit. The limit is identified per:
 * group id
@@ -188,7 +175,7 @@ import (
 
 func main() {
    ...
-   var client api.Client // initialize client
+   var client api.Client // TODO initialize client here
    var userId string     // set this to "sub" field value from an authentication token, for example
    ...
    ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Second)
@@ -209,11 +196,6 @@ func main() {
 
 ## 3.2. Permits
 
-> **Note**:
->
-> Usage permits are applicable only when connecting to the Awakari Cloud.
-> For the Self-Hosted Core skip the entire Permits section.
-
 Usage permits represents the current usage statistics (counters) by the subject. Similar to usage limit, the counters
 represent the group-level usage when the user id is empty.
 
@@ -231,7 +213,7 @@ import (
 
 func main() {
    ...
-   var client api.Client // initialize client
+   var client api.Client // TODO initialize client here
    var userId string     // set this to "sub" field value from an authentication token, for example
    ...
    ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Second)
@@ -266,7 +248,7 @@ import (
 
 func main() {
    ...
-   var client api.Client // initialize client
+   var client api.Client // TODO initialize client here
    var userId string     // set this to "sub" field value from an authentication token, for example
    ...
    ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Minute)
@@ -332,13 +314,12 @@ import (
    "github.com/awakari/client-sdk-go/model/usage"
    "github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
    "time"
-)
-...
+   ...
 )
 
 func main() {
    ...
-   var client api.Client // initialize client
+   var client api.Client // TODO initialize client here
    var userId string     // set this to "sub" field value from an authentication token, for example
    ...
    ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Second)
@@ -410,7 +391,7 @@ import (
 
 func main() {
    ...
-   var client api.Client // initialize client
+   var client api.Client // TODO initialize client here
    var userId string     // set this to "sub" field value from an authentication token, for example
    batchSize := uint32(16)
    ...
@@ -457,9 +438,9 @@ TODO
 
 ```shell
 API_URI=api.local:443 \
+CA_PATH=ca.crt \
 CLIENT_CERT_PATH=test0.client0.crt \
 CLIENT_PRIVATE_KEY_PATH=test0.client0.key \
-SERVER_PUBLIC_KEY_PATH=ca.crt \
 make test
 ```
 

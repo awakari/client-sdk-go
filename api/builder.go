@@ -15,9 +15,9 @@ import (
 
 type ClientBuilder interface {
 
-	// ServerPublicKey sets the CA certificate to authenticate the Awakari service.
+	// CertAuthority sets the CA to authenticate the Awakari service.
 	// Should be used together with ClientKeyPair and ApiUri.
-	ServerPublicKey(caCrt []byte) ClientBuilder
+	CertAuthority(caCrt []byte) ClientBuilder
 
 	// ClientKeyPair sets the client certificate key pair to allow Awakari service to authenticate the client.
 	// Should be used together with ServerPublicKey and ApiUri.
@@ -58,7 +58,7 @@ func NewClientBuilder() ClientBuilder {
 	return &builder{}
 }
 
-func (b *builder) ServerPublicKey(caCrt []byte) ClientBuilder {
+func (b *builder) CertAuthority(caCrt []byte) ClientBuilder {
 	b.caCrt = caCrt
 	return b
 }

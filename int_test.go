@@ -19,7 +19,7 @@ import (
 
 const userId = "test-user-0"
 
-var serverPublicKeyPath = os.Getenv("SERVER_PUBLIC_KEY_PATH")
+var caPath = os.Getenv("CA_PATH")
 var clientCertPath = os.Getenv("CLIENT_CERT_PATH")
 var clientPrivateKeyPath = os.Getenv("CLIENT_PRIVATE_KEY_PATH")
 var apiUri = os.Getenv("API_URI")
@@ -34,7 +34,7 @@ func TestPublicApiUsage(t *testing.T) {
 	defer cancel()
 
 	// load TLS certificates 1st
-	caCrt, err := os.ReadFile(serverPublicKeyPath)
+	caCrt, err := os.ReadFile(caPath)
 	if err != nil {
 		panic(err)
 	}
@@ -51,7 +51,7 @@ func TestPublicApiUsage(t *testing.T) {
 	var client api.Client
 	client, err = api.
 		NewClientBuilder().
-		ServerPublicKey(caCrt).
+		CertAuthority(caCrt).
 		ClientKeyPair(clientCrt, clientKey).
 		ApiUri(apiUri).
 		Build()
