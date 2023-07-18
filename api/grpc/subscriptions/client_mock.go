@@ -44,23 +44,23 @@ func (cm clientMock) Read(ctx context.Context, req *ReadRequest, opts ...grpc.Ca
 	default:
 		resp.Description = "subscription"
 		resp.Enabled = true
-		resp.Cond = &ConditionOutput{
-			Cond: &ConditionOutput_Gc{
-				Gc: &GroupConditionOutput{
+		resp.Cond = &Condition{
+			Cond: &Condition_Gc{
+				Gc: &GroupCondition{
 					Logic: GroupLogic_Or,
-					Group: []*ConditionOutput{
+					Group: []*Condition{
 						{
 							Not: true,
-							Cond: &ConditionOutput_Tc{
-								Tc: &TextConditionOutput{
+							Cond: &Condition_Tc{
+								Tc: &TextCondition{
 									Key:  "k0",
 									Term: "p0",
 								},
 							},
 						},
 						{
-							Cond: &ConditionOutput_Tc{
-								Tc: &TextConditionOutput{
+							Cond: &Condition_Tc{
+								Tc: &TextCondition{
 									Key:   "k1",
 									Term:  "p1",
 									Exact: true,

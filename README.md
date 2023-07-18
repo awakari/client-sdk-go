@@ -26,6 +26,11 @@ Reference Awakari SDK for a Golang client.
 
 To secure the Awakari public API usage, the mutual TLS encryption is used together with additional user identity.
 
+> **Note**:
+>
+> Not available for self-hosted core system. 
+> Skip the [2. Security](#2-security) section entirely when using self-hosted core system.
+
 ## 2.1. Certificate Authority
 
 Used to authenticate the Awakari service by the client. A client should fetch it, for example: [demo instance CA](https://awakari.com/certs/ca-demo.awakari.cloud.crt).
@@ -109,7 +114,36 @@ as a user id.
 
 See the [int_test.go](int_test.go) for the complete test code example.
 
-Before using the API, it's necessary to initialize the client:
+Before using the API, it's necessary to initialize the client. 
+When using a self-hosted core system the initialization should be like follows:
+
+```go
+package main
+
+import (
+   "github.com/awakari/client-sdk-go/api"
+   "os"
+   ...
+)
+
+func main() {
+   ...
+   client, err := api.
+       NewClientBuilder().
+       ReaderUri("core-reader:50051"). // skip this line if reader API is not used
+       SubscriptionsUri("core-subscriptions-proxy:50051"). // skip this line if subscriptions API is not used
+       WriterUri("core-writer:50051"). // skip this line if writer API is not used
+       Build()
+   if err != nil {
+       panic(err)
+   }
+   defer client.Close()
+   ...
+}
+```
+
+The initialization is a bit different for a public cloud API:
+
 ```go
 package main
 
@@ -148,6 +182,11 @@ func main() {
 ```
 
 ## 3.1. Limits
+
+> **Note**:
+>
+> Limits API is not available for self-hosted core system.
+> Skip the [3.1. Limits](#31-limits) section entirely when using self-hosted core system.
 
 Usage limit represents the successful API call count limit. The limit is identified per:
 * group id
@@ -195,6 +234,11 @@ func main() {
 ```
 
 ## 3.2. Permits
+
+> **Note**:
+>
+> Permits API is not available for self-hosted core system.
+> Skip the [3.2. Permits](#32-permits) section entirely when using self-hosted core system.
 
 Usage permits represents the current usage statistics (counters) by the subject. Similar to usage limit, the counters
 represent the group-level usage when the user id is empty.
@@ -272,7 +316,7 @@ func main() {
       Description: "my disabled subscription",
       Enabled:     false,
    }
-   err = client.UpdateSubscriptionMetadata(ctx, userId, subId, upd)
+   err = client.UpdateSubscription(ctx, userId, subId, upd)
    
    // Delete the subscription
    err = client.DeleteSubscription(ctx, userId, subId)

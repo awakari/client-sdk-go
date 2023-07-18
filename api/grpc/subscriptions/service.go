@@ -122,26 +122,26 @@ func (svc service) SearchOwn(ctx context.Context, userId string, limit uint32, c
 	return
 }
 
-func encodeCondition(src condition.Condition) (dst *ConditionInput) {
-	dst = &ConditionInput{
+func encodeCondition(src condition.Condition) (dst *Condition) {
+	dst = &Condition{
 		Not: src.IsNot(),
 	}
 	switch c := src.(type) {
 	case condition.GroupCondition:
-		var dstGroup []*ConditionInput
+		var dstGroup []*Condition
 		for _, childSrc := range c.GetGroup() {
 			childDst := encodeCondition(childSrc)
 			dstGroup = append(dstGroup, childDst)
 		}
-		dst.Cond = &ConditionInput_Gc{
-			Gc: &GroupConditionInput{
+		dst.Cond = &Condition_Gc{
+			Gc: &GroupCondition{
 				Logic: GroupLogic(c.GetLogic()),
 				Group: dstGroup,
 			},
 		}
 	case condition.TextCondition:
-		dst.Cond = &ConditionInput_Tc{
-			Tc: &TextConditionInput{
+		dst.Cond = &Condition_Tc{
+			Tc: &TextCondition{
 				Key:   c.GetKey(),
 				Term:  c.GetTerm(),
 				Exact: c.IsExact(),
@@ -151,7 +151,7 @@ func encodeCondition(src condition.Condition) (dst *ConditionInput) {
 	return
 }
 
-func decodeCondition(src *ConditionOutput) (dst condition.Condition, err error) {
+func decodeCondition(src *Condition) (dst condition.Condition, err error) {
 	gc, tc := src.GetGc(), src.GetTc()
 	switch {
 	case gc != nil:

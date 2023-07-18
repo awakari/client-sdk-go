@@ -32,7 +32,7 @@ type ClientBuilder interface {
 	// Useful when the specific message reading API is needed by the client.
 	ReaderUri(readerUri string) ClientBuilder
 
-	// SubscriptionsUri sets the Awakari subscriptions API URI. Overrides any value set by ApiUri.
+	// SubscriptionsUri sets the Awakari subscriptions-proxy API URI. Overrides any value set by ApiUri.
 	// Useful when the specific subscriptions management API is needed by the client.
 	SubscriptionsUri(subsUri string) ClientBuilder
 
