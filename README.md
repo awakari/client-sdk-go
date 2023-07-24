@@ -131,7 +131,7 @@ func main() {
    client, err := api.
        NewClientBuilder().
        ReaderUri("core-reader:50051"). // skip this line if reader API is not used
-       SubscriptionsUri("core-subscriptions-proxy:50051"). // skip this line if subscriptions API is not used
+       SubscriptionsUri("core-subscriptionsproxy:50051"). // skip this line if subscriptions API is not used
        WriterUri("core-writer:50051"). // skip this line if writer API is not used
        Build()
    if err != nil {
