@@ -1,4 +1,4 @@
-package writer
+package resolver
 
 import (
 	"github.com/awakari/client-sdk-go/api/grpc/limits"

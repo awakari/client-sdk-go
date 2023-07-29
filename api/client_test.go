@@ -6,9 +6,9 @@ import (
 	"github.com/awakari/client-sdk-go/api/grpc/limits"
 	"github.com/awakari/client-sdk-go/api/grpc/permits"
 	"github.com/awakari/client-sdk-go/api/grpc/reader"
+	"github.com/awakari/client-sdk-go/api/grpc/resolver"
 	"github.com/awakari/client-sdk-go/api/grpc/subject"
 	"github.com/awakari/client-sdk-go/api/grpc/subscriptions"
-	"github.com/awakari/client-sdk-go/api/grpc/writer"
 	"github.com/awakari/client-sdk-go/model/subscription"
 	"github.com/awakari/client-sdk-go/model/subscription/condition"
 	"github.com/awakari/client-sdk-go/model/usage"
@@ -243,7 +243,7 @@ func TestClient_ReadMessages(t *testing.T) {
 
 func TestClient_WriteMessages(t *testing.T) {
 	cases := map[string]struct {
-		svcWriter writer.Service
+		svcWriter resolver.Service
 		userId    string
 		err0      error
 		msgs      []*pb.CloudEvent
@@ -255,17 +255,17 @@ func TestClient_WriteMessages(t *testing.T) {
 			err0:   ErrApiDisabled,
 		},
 		"fail open stream": {
-			svcWriter: writer.NewServiceMock(),
+			svcWriter: resolver.NewServiceMock(),
 			userId:    "fail",
-			err0:      writer.ErrInternal,
+			err0:      resolver.ErrInternal,
 		},
 		"fail auth": {
-			svcWriter: writer.NewServiceMock(),
+			svcWriter: resolver.NewServiceMock(),
 			userId:    "fail_auth",
 			err0:      auth.ErrAuth,
 		},
 		"fail write": {
-			svcWriter: writer.NewServiceMock(),
+			svcWriter: resolver.NewServiceMock(),
 			userId:    "user0",
 			msgs: []*pb.CloudEvent{
 				{
@@ -276,10 +276,10 @@ func TestClient_WriteMessages(t *testing.T) {
 				},
 			},
 			ackCount: 1,
-			err1:     writer.ErrInternal,
+			err1:     resolver.ErrInternal,
 		},
 		"limit reached": {
-			svcWriter: writer.NewServiceMock(),
+			svcWriter: resolver.NewServiceMock(),
 			userId:    "user0",
 			msgs: []*pb.CloudEvent{
 				{
@@ -296,7 +296,7 @@ func TestClient_WriteMessages(t *testing.T) {
 			err1:     limits.ErrReached,
 		},
 		"ok": {
-			svcWriter: writer.NewServiceMock(),
+			svcWriter: resolver.NewServiceMock(),
 			userId:    "user0",
 			msgs: []*pb.CloudEvent{
 				{

@@ -7,8 +7,8 @@ import (
 	"github.com/awakari/client-sdk-go/api/grpc/limits"
 	"github.com/awakari/client-sdk-go/api/grpc/permits"
 	"github.com/awakari/client-sdk-go/api/grpc/reader"
+	"github.com/awakari/client-sdk-go/api/grpc/resolver"
 	"github.com/awakari/client-sdk-go/api/grpc/subscriptions"
-	"github.com/awakari/client-sdk-go/api/grpc/writer"
 	"github.com/awakari/client-sdk-go/model"
 	"github.com/awakari/client-sdk-go/model/subscription"
 	"github.com/awakari/client-sdk-go/model/usage"
@@ -65,7 +65,7 @@ type client struct {
 	svcReader   reader.Service
 	svcPermits  permits.Service
 	svcSubs     subscriptions.Service
-	svcWriter   writer.Service
+	svcWriter   resolver.Service
 }
 
 var ErrApiDisabled = errors.New("the API call is not enabled for this client")
