@@ -6,8 +6,8 @@ import (
 	"github.com/awakari/client-sdk-go/api/grpc/limits"
 	"github.com/awakari/client-sdk-go/api/grpc/permits"
 	"github.com/awakari/client-sdk-go/api/grpc/reader"
+	"github.com/awakari/client-sdk-go/api/grpc/resolver"
 	"github.com/awakari/client-sdk-go/api/grpc/subscriptions"
-	"github.com/awakari/client-sdk-go/api/grpc/writer"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -162,10 +162,10 @@ func (b *builder) Build() (c Client, err error) {
 	} else if b.apiUri != "" {
 		connWriter, err = grpc.Dial(b.apiUri, optsDial...)
 	}
-	var svcWriter writer.Service
+	var svcWriter resolver.Service
 	if connWriter != nil {
-		clientWriter := writer.NewServiceClient(connWriter)
-		svcWriter = writer.NewService(clientWriter)
+		clientWriter := resolver.NewServiceClient(connWriter)
+		svcWriter = resolver.NewService(clientWriter)
 	}
 	//
 	c = client{

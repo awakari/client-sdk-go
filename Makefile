@@ -11,9 +11,9 @@ proto:
 		api/grpc/limits/*.proto \
 		api/grpc/permits/*.proto \
 		api/grpc/reader/*.proto \
+		api/grpc/resolver/*.proto \
 		api/grpc/subject/*.proto \
-		api/grpc/subscriptions/*.proto \
-		api/grpc/writer/*.proto
+		api/grpc/subscriptions/*.proto
 
 vet: proto
 	go vet

@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package awakari.writer;
+package awakari.resolver;
 
-option go_package = "api/grpc/writer";
+option go_package = "api/grpc/resolver";
 
 import "api/grpc/cloudevents/cloudevent.proto";
 
