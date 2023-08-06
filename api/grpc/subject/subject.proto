@@ -6,6 +6,6 @@ option go_package = "github.com/awakari/client-sdk-go/api/grpc/subject";
 
 enum Subject {
   Undefined = 0;
-  PublishMessages = 1;
-  Subscriptions = 2;
+  Subscriptions = 1;
+  PublishEvents = 2;
 }

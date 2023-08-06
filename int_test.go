@@ -91,7 +91,7 @@ func TestPublicApiUsage(t *testing.T) {
 
 	// Get the initial Publish Messages API Usage
 	var usagePubMsgsStart usage.Usage
-	usagePubMsgsStart, err = client.ReadUsage(ctx, userId, usage.SubjectPublishMessages)
+	usagePubMsgsStart, err = client.ReadUsage(ctx, userId, usage.SubjectPublishEvents)
 	assert.Nil(t, err)
 
 	// Write a Message
@@ -132,7 +132,7 @@ func TestPublicApiUsage(t *testing.T) {
 
 	// Check the Publish Messages API Usage change
 	var usagePubMsgs usage.Usage
-	usagePubMsgs, err = client.ReadUsage(ctx, userId, usage.SubjectPublishMessages)
+	usagePubMsgs, err = client.ReadUsage(ctx, userId, usage.SubjectPublishEvents)
 	assert.Nil(t, err)
 	assert.Equal(t, usagePubMsgsStart.Count+1, usagePubMsgs.Count)
 	assert.Equal(t, usagePubMsgsStart.CountTotal+1, usagePubMsgs.CountTotal)
