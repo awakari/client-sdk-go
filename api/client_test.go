@@ -49,7 +49,7 @@ func TestClient_ReadUsage(t *testing.T) {
 		},
 		"fail": {
 			svcPermits: permits.NewServiceMock(),
-			subj:       usage.SubjectPublishMessages,
+			subj:       usage.SubjectPublishEvents,
 			userId:     "fail",
 			err:        permits.ErrInternal,
 		},
@@ -92,7 +92,7 @@ func TestClient_ReadUsageLimit(t *testing.T) {
 		},
 		"both group and user missing": {
 			svcLimits: limits.NewServiceMock(),
-			subj:      usage.SubjectPublishMessages,
+			subj:      usage.SubjectPublishEvents,
 			userId:    "group_missing",
 		},
 		"group present, user missing": {
@@ -116,7 +116,7 @@ func TestClient_ReadUsageLimit(t *testing.T) {
 		},
 		"fail": {
 			svcLimits: limits.NewServiceMock(),
-			subj:      usage.SubjectPublishMessages,
+			subj:      usage.SubjectPublishEvents,
 			userId:    "fail",
 			err:       limits.ErrInternal,
 		},

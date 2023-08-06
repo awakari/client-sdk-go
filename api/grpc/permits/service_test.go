@@ -20,7 +20,7 @@ func TestService_GetUsage(t *testing.T) {
 	}{
 		"ok": {
 			userId:  "user0",
-			subject: usage.SubjectPublishMessages,
+			subject: usage.SubjectPublishEvents,
 			out: usage.Usage{
 				Count:      1,
 				CountTotal: 2,
@@ -39,7 +39,7 @@ func TestService_GetUsage(t *testing.T) {
 		},
 		"fail auth": {
 			userId:  "fail_auth",
-			subject: usage.SubjectPublishMessages,
+			subject: usage.SubjectPublishEvents,
 			err:     auth.ErrAuth,
 		},
 	}
