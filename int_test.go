@@ -18,6 +18,7 @@ import (
 )
 
 const userId = "test-user-0"
+const usageUserId = "" // make it equal to userId when using user-specific limits
 
 var caPath = os.Getenv("CA_PATH")
 var clientCertPath = os.Getenv("CLIENT_CERT_PATH")
@@ -60,7 +61,7 @@ func TestPublicApiUsage(t *testing.T) {
 
 	// Get the initial Subscriptions API Usage
 	var usageSubsStart usage.Usage
-	usageSubsStart, err = client.ReadUsage(ctx, userId, usage.SubjectSubscriptions)
+	usageSubsStart, err = client.ReadUsage(ctx, usageUserId, usage.SubjectSubscriptions)
 	assert.Nil(t, err)
 
 	// Create a Subscription
@@ -78,7 +79,7 @@ func TestPublicApiUsage(t *testing.T) {
 
 	// Check the Subscriptions API Usage change
 	var usageSubs usage.Usage
-	usageSubs, err = client.ReadUsage(ctx, userId, usage.SubjectSubscriptions)
+	usageSubs, err = client.ReadUsage(ctx, usageUserId, usage.SubjectSubscriptions)
 	assert.Nil(t, err)
 	assert.Equal(t, usageSubsStart.Count+1, usageSubs.Count)
 	assert.Equal(t, usageSubsStart.CountTotal+1, usageSubs.CountTotal)
@@ -91,7 +92,7 @@ func TestPublicApiUsage(t *testing.T) {
 
 	// Get the initial Publish Messages API Usage
 	var usagePubMsgsStart usage.Usage
-	usagePubMsgsStart, err = client.ReadUsage(ctx, userId, usage.SubjectPublishEvents)
+	usagePubMsgsStart, err = client.ReadUsage(ctx, usageUserId, usage.SubjectPublishEvents)
 	assert.Nil(t, err)
 
 	// Write a Message
@@ -132,7 +133,7 @@ func TestPublicApiUsage(t *testing.T) {
 
 	// Check the Publish Messages API Usage change
 	var usagePubMsgs usage.Usage
-	usagePubMsgs, err = client.ReadUsage(ctx, userId, usage.SubjectPublishEvents)
+	usagePubMsgs, err = client.ReadUsage(ctx, usageUserId, usage.SubjectPublishEvents)
 	assert.Nil(t, err)
 	assert.Equal(t, usagePubMsgsStart.Count+1, usagePubMsgs.Count)
 	assert.Equal(t, usagePubMsgsStart.CountTotal+1, usagePubMsgs.CountTotal)
@@ -151,7 +152,7 @@ func TestPublicApiUsage(t *testing.T) {
 	assert.Nil(t, err)
 
 	// Check the Subscriptions API Usage change
-	usageSubs, err = client.ReadUsage(ctx, userId, usage.SubjectSubscriptions)
+	usageSubs, err = client.ReadUsage(ctx, usageUserId, usage.SubjectSubscriptions)
 	assert.Nil(t, err)
 	assert.Equal(t, usageSubsStart.Count, usageSubs.Count)
 	assert.Equal(t, usageSubsStart.CountTotal, usageSubs.CountTotal)

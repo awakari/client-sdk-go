@@ -2,7 +2,7 @@
 
 1. [Overview](#1-overview)<br/>
 2. [Security](#2-security)<br/>
-   2.1. [Server Public Key](#21-server-public-key)<br/>
+   2.1. [Certificate Authority](#21-certificate-authority)<br/>
    2.2. [Client Key Pair](#22-client-key-pair)<br/>
    2.3. [User Identity](#23-user-identity)<br/>
 3. [Usage](#3-usage)<br/>
@@ -115,7 +115,7 @@ as a user id.
 See the [int_test.go](int_test.go) for the complete test code example.
 
 Before using the API, it's necessary to initialize the client. 
-When using a self-hosted core system the initialization should be like follows:
+When using a hybrid deployment the initialization should be like follows:
 
 ```go
 package main
@@ -142,7 +142,7 @@ func main() {
 }
 ```
 
-The initialization is a bit different for a public cloud API:
+The initialization is a bit different for a serverless API usage:
 
 ```go
 package main
@@ -197,8 +197,8 @@ There are the group-level limits where user id is not specified. All users from 
 case.
 
 Usage subject may be one of:
-* Publish Messages
 * Subscriptions
+* Publish Events
 
 ```go
 package main
@@ -221,12 +221,12 @@ func main() {
    defer cancel()
    var l usage.Limit
    var err error
-   l, err = client.ReadUsageLimit(ctx, userId, usage.SubjectPublishMessages)
+   l, err = client.ReadUsageLimit(ctx, userId, usage.SubjectPublishEvents)
    if err == nil {
       if u.UserId == "" {
-         fmt.Printf("group usage publish messages limit: %d", l.Count)
+         fmt.Printf("group usage publish events limit: %d", l.Count)
       } else {
-         fmt.Printf("user specific publish messages limit: %d", l.Count)
+         fmt.Printf("user specific publish events limit: %d", l.Count)
       }
    }
    ...
