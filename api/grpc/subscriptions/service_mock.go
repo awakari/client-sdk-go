@@ -46,7 +46,16 @@ func (sm serviceMock) Read(ctx context.Context, userId, subId string) (subData s
 		subData.Enabled = true
 		subData.Condition = condition.
 			NewBuilder().
-			BuildTextCondition()
+			Any([]condition.Condition{
+				condition.
+					NewBuilder().
+					BuildTextCondition(),
+				condition.
+					NewBuilder().
+					LessThanOrEqual(42).
+					BuildNumberCondition(),
+			}).
+			BuildGroupCondition()
 	}
 	return
 }

@@ -2,31 +2,52 @@ package condition
 
 type Builder interface {
 
-	// Negation makes a resulting Condition negative.
+	// Not makes a resulting Condition negative.
 	// May be set for any resulting Condition type.
-	Negation() Builder
+	Not() Builder
 
-	// GroupLogic defines the logic for a resulting GroupCondition. Default is GroupLogicAnd.
-	GroupLogic(l GroupLogic) Builder
+	// All defines the nested Condition set for a resulting GroupCondition with GroupLogicAnd.
+	All(children []Condition) Builder
 
-	// GroupChildren defines the nested Condition set for a resulting GroupCondition.
-	GroupChildren(children []Condition) Builder
+	// Any defines the nested Condition set for a resulting GroupCondition with GroupLogicOr.
+	Any(children []Condition) Builder
+
+	// Xor defines the nested Condition set for a resulting GroupCondition with GroupLogicXor.
+	Xor(children []Condition) Builder
 
 	// BuildGroupCondition builds a GroupCondition.
 	BuildGroupCondition() (c Condition)
 
-	// MatchAttrKey defines the incoming messages attribute key to match for a resulting KeyCondition.
+	// AttributeKey defines the incoming messages attribute key to match for a resulting KeyCondition.
 	// Default is empty string key. For a TextCondition empty key causes the matching against all attribute keys.
-	MatchAttrKey(k string) Builder
+	AttributeKey(k string) Builder
 
-	// MatchText defines the text search terms for a resulting TextCondition.
-	MatchText(p string) Builder
+	// AnyOfWords defines the text search words (separated by a whitespace) for a resulting TextCondition.
+	AnyOfWords(text string) Builder
 
-	// MatchExact enables the exact text matching criteria for a resulting TextCondition.
-	MatchExact() Builder
+	// TextEquals enables the exact text matching criteria for a resulting TextCondition.
+	TextEquals(text string) Builder
 
 	// BuildTextCondition builds a TextCondition.
 	BuildTextCondition() (c Condition)
+
+	// GreaterThan enables the number value matching criteria "x > val" for a NumberCondition.
+	GreaterThan(val float64) Builder
+
+	// GreaterThanOrEqual enables the number value matching criteria "x >= val" for a NumberCondition.
+	GreaterThanOrEqual(val float64) Builder
+
+	// Equal enables the number value matching criteria "x == val" for a NumberCondition.
+	Equal(val float64) Builder
+
+	// LessThanOrEqual enables the number value matching criteria "x <= val" for a NumberCondition.
+	LessThanOrEqual(val float64) Builder
+
+	// LessThan enables the number value matching criteria "x < val" for a NumberCondition.
+	LessThan(val float64) Builder
+
+	// BuildNumberCondition builds a NumberCondition
+	BuildNumberCondition() (c Condition)
 }
 
 type builder struct {
@@ -36,38 +57,50 @@ type builder struct {
 	key   string
 	term  string
 	exact bool
+	op    NumOp
+	val   float64
 }
 
 func NewBuilder() Builder {
 	return &builder{}
 }
 
-func (b *builder) Negation() Builder {
+func (b *builder) Not() Builder {
 	b.not = true
 	return b
 }
 
-func (b *builder) GroupLogic(l GroupLogic) Builder {
-	b.gl = l
-	return b
-}
-
-func (b *builder) GroupChildren(children []Condition) Builder {
+func (b *builder) All(children []Condition) Builder {
+	b.gl = GroupLogicAnd
 	b.gc = children
 	return b
 }
 
-func (b *builder) MatchAttrKey(k string) Builder {
+func (b *builder) Any(children []Condition) Builder {
+	b.gl = GroupLogicOr
+	b.gc = children
+	return b
+}
+
+func (b *builder) Xor(children []Condition) Builder {
+	b.gl = GroupLogicXor
+	b.gc = children
+	return b
+}
+
+func (b *builder) AttributeKey(k string) Builder {
 	b.key = k
 	return b
 }
 
-func (b *builder) MatchText(term string) Builder {
-	b.term = term
+func (b *builder) AnyOfWords(text string) Builder {
+	b.term = text
+	b.exact = false
 	return b
 }
 
-func (b *builder) MatchExact() Builder {
+func (b *builder) TextEquals(text string) Builder {
+	b.term = text
 	b.exact = true
 	return b
 }
@@ -95,6 +128,51 @@ func (b *builder) BuildTextCondition() (c Condition) {
 		},
 		Term:  b.term,
 		Exact: b.exact,
+	}
+	return
+}
+
+func (b *builder) GreaterThan(val float64) Builder {
+	b.op = NumOpGt
+	b.val = val
+	return b
+}
+
+func (b *builder) GreaterThanOrEqual(val float64) Builder {
+	b.op = NumOpGte
+	b.val = val
+	return b
+}
+
+func (b *builder) Equal(val float64) Builder {
+	b.op = NumOpEq
+	b.val = val
+	return b
+}
+
+func (b *builder) LessThanOrEqual(val float64) Builder {
+	b.op = NumOpLte
+	b.val = val
+	return b
+}
+
+func (b *builder) LessThan(val float64) Builder {
+	b.op = NumOpLt
+	b.val = val
+	return b
+}
+
+func (b *builder) BuildNumberCondition() (c Condition) {
+	c = condition{
+		b.not,
+	}
+	c = numCond{
+		kc: keyCondition{
+			Condition: c,
+			Key:       b.key,
+		},
+		op:  b.op,
+		val: b.val,
 	}
 	return
 }

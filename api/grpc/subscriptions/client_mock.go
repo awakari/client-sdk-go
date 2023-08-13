@@ -59,11 +59,11 @@ func (cm clientMock) Read(ctx context.Context, req *ReadRequest, opts ...grpc.Ca
 							},
 						},
 						{
-							Cond: &Condition_Tc{
-								Tc: &TextCondition{
-									Key:   "k1",
-									Term:  "p1",
-									Exact: true,
+							Cond: &Condition_Nc{
+								Nc: &NumberCondition{
+									Key: "k1",
+									Op:  Operation_Gt,
+									Val: -42.1,
 								},
 							},
 						},

@@ -305,8 +305,8 @@ func main() {
       Description: "my subscription",
 	  Enabled:     true,
       Condition: condition.NewBuilder().
-         MatchAttrKey("tags").
-         MatchText("SpaceX").
+         AttributeKey("tags").
+         AnyOfWords("SpaceX").
          BuildTextCondition(),
    }
    subId, err = client.CreateSubscription(ctx, userId, subData)

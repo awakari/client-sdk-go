@@ -66,7 +66,7 @@ func TestService_Create(t *testing.T) {
 				Description: "my subscription",
 				Condition: condition.
 					NewBuilder().
-					GroupChildren(
+					All(
 						[]condition.Condition{
 							condition.
 								NewBuilder().
@@ -136,21 +136,19 @@ func TestService_Read(t *testing.T) {
 				Enabled:     true,
 				Condition: condition.
 					NewBuilder().
-					GroupLogic(condition.GroupLogicOr).
-					GroupChildren(
+					Any(
 						[]condition.Condition{
 							condition.
 								NewBuilder().
-								Negation().
-								MatchAttrKey("k0").
-								MatchText("p0").
+								Not().
+								AttributeKey("k0").
+								AnyOfWords("p0").
 								BuildTextCondition(),
 							condition.
 								NewBuilder().
-								MatchAttrKey("k1").
-								MatchText("p1").
-								MatchExact().
-								BuildTextCondition(),
+								AttributeKey("k1").
+								GreaterThan(-42.1).
+								BuildNumberCondition(),
 						},
 					).
 					BuildGroupCondition(),
@@ -316,17 +314,20 @@ func conditionsDataEqual(a, b condition.Condition) (equal bool) {
 						}
 					}
 				}
-			case condition.TextCondition:
-				equal = false
 			default:
 				equal = false
 			}
 		case condition.TextCondition:
 			switch bt := b.(type) {
-			case condition.GroupCondition:
-				equal = false
 			case condition.TextCondition:
 				equal = at.GetKey() == bt.GetKey() && at.GetTerm() == bt.GetTerm()
+			default:
+				equal = false
+			}
+		case condition.NumberCondition:
+			switch bt := b.(type) {
+			case condition.NumberCondition:
+				equal = at.GetKey() == bt.GetKey() && at.GetOperation() == bt.GetOperation() && at.GetValue() == bt.GetValue()
 			default:
 				equal = false
 			}

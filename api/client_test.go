@@ -405,7 +405,15 @@ func TestClient_ReadSubscription(t *testing.T) {
 				Enabled:     true,
 				Condition: condition.
 					NewBuilder().
-					BuildTextCondition(),
+					Any([]condition.Condition{
+						condition.
+							NewBuilder().BuildTextCondition(),
+						condition.
+							NewBuilder().
+							LessThanOrEqual(42).
+							BuildNumberCondition(),
+					}).
+					BuildGroupCondition(),
 			},
 		},
 		"subs API not set": {
