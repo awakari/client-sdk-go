@@ -147,12 +147,39 @@ func encodeCondition(src condition.Condition) (dst *Condition) {
 				Exact: c.IsExact(),
 			},
 		}
+	case condition.NumberCondition:
+		dstOp := encodeNumOp(c.GetOperation())
+		dst.Cond = &Condition_Nc{
+			Nc: &NumberCondition{
+				Key: c.GetKey(),
+				Op:  dstOp,
+				Val: c.GetValue(),
+			},
+		}
+	}
+	return
+}
+
+func encodeNumOp(src condition.NumOp) (dst Operation) {
+	switch src {
+	case condition.NumOpGt:
+		dst = Operation_Gt
+	case condition.NumOpGte:
+		dst = Operation_Gte
+	case condition.NumOpEq:
+		dst = Operation_Eq
+	case condition.NumOpLte:
+		dst = Operation_Lte
+	case condition.NumOpLt:
+		dst = Operation_Lt
+	default:
+		dst = Operation_Undefined
 	}
 	return
 }
 
 func decodeCondition(src *Condition) (dst condition.Condition, err error) {
-	gc, tc := src.GetGc(), src.GetTc()
+	gc, nc, tc := src.GetGc(), src.GetNc(), src.GetTc()
 	switch {
 	case gc != nil:
 		var group []condition.Condition
@@ -171,6 +198,12 @@ func decodeCondition(src *Condition) (dst condition.Condition, err error) {
 				group,
 			)
 		}
+	case nc != nil:
+		dstOp := decodeNumOp(nc.Op)
+		dst = condition.NewNumberCondition(
+			condition.NewKeyCondition(condition.NewCondition(src.Not), nc.GetKey()),
+			dstOp, nc.Val,
+		)
 	case tc != nil:
 		dst = condition.NewTextCondition(
 			condition.NewKeyCondition(condition.NewCondition(src.Not), tc.GetKey()),
@@ -178,6 +211,24 @@ func decodeCondition(src *Condition) (dst condition.Condition, err error) {
 		)
 	default:
 		err = fmt.Errorf("%w: unsupported condition type", ErrInternal)
+	}
+	return
+}
+
+func decodeNumOp(src Operation) (dst condition.NumOp) {
+	switch src {
+	case Operation_Gt:
+		dst = condition.NumOpGt
+	case Operation_Gte:
+		dst = condition.NumOpGte
+	case Operation_Eq:
+		dst = condition.NumOpEq
+	case Operation_Lte:
+		dst = condition.NumOpLte
+	case Operation_Lt:
+		dst = condition.NumOpLt
+	default:
+		dst = condition.NumOpUndefined
 	}
 	return
 }

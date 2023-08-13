@@ -69,8 +69,8 @@ func TestPublicApiUsage(t *testing.T) {
 		Description: "test subscription 0",
 		Enabled:     true,
 		Condition: condition.NewBuilder().
-			MatchAttrKey("tags").
-			MatchText("Neutrino").
+			AttributeKey("tags").
+			AnyOfWords("Neutrino").
 			BuildTextCondition(),
 	}
 	var subId string
