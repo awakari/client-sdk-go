@@ -41,6 +41,9 @@ func (svc service) Get(ctx context.Context, userId string, subj usage.Subject) (
 	if err == nil {
 		l.Count = resp.Count
 		l.UserId = resp.UserId
+		if resp.Expires != nil {
+			l.Expires = resp.Expires.AsTime()
+		}
 	}
 	return
 }

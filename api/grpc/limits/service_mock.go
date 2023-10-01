@@ -5,6 +5,7 @@ import (
 	"github.com/awakari/client-sdk-go/api/grpc/auth"
 	"github.com/awakari/client-sdk-go/api/grpc/subject"
 	"github.com/awakari/client-sdk-go/model/usage"
+	"time"
 )
 
 type serviceMock struct {
@@ -28,6 +29,10 @@ func (sm serviceMock) Get(ctx context.Context, userId string, subj usage.Subject
 		case "group_missing":
 		case "user_missing":
 			l.Count = 1
+		case "with_expiration":
+			l.Count = 2
+			l.UserId = userId
+			l.Expires = time.Date(2345, 10, 1, 20, 21, 35, 0, time.UTC)
 		default:
 			l.Count = 2
 			l.UserId = userId

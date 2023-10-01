@@ -90,6 +90,16 @@ func TestClient_ReadUsageLimit(t *testing.T) {
 				UserId: "user0",
 			},
 		},
+		"with expiration": {
+			svcLimits: limits.NewServiceMock(),
+			subj:      usage.SubjectSubscriptions,
+			userId:    "with_expiration",
+			l: usage.Limit{
+				Count:   2,
+				UserId:  "with_expiration",
+				Expires: time.Date(2345, 10, 1, 20, 21, 35, 0, time.UTC),
+			},
+		},
 		"both group and user missing": {
 			svcLimits: limits.NewServiceMock(),
 			subj:      usage.SubjectPublishEvents,

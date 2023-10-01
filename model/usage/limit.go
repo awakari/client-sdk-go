@@ -1,5 +1,7 @@
 package usage
 
+import "time"
+
 // Limit represents the usage limit.
 type Limit struct {
 
@@ -8,4 +10,7 @@ type Limit struct {
 
 	// UserId represents the Limit user association. If empty, the Limit is a group-level limit.
 	UserId string
+
+	// Expires represents the user-specific limit expiration deadline.
+	Expires time.Time
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/awakari/client-sdk-go/model/usage"
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 )
 
 func TestService_Get(t *testing.T) {
@@ -23,6 +24,15 @@ func TestService_Get(t *testing.T) {
 			lim: usage.Limit{
 				Count:  1,
 				UserId: "user0",
+			},
+		},
+		"with expiration": {
+			userId:  "with_expiration",
+			subject: usage.SubjectPublishEvents,
+			lim: usage.Limit{
+				Count:   1,
+				UserId:  "with_expiration",
+				Expires: time.Date(2023, 10, 1, 20, 21, 35, 0, time.UTC),
 			},
 		},
 		"invalid subject": {
