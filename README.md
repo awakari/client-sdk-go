@@ -304,6 +304,7 @@ func main() {
    subData := subscription.Data{
       Description: "my subscription",
 	  Enabled:     true,
+      Expires: time.Now().Add(24 * time.Hour), // optional, subscription will be treated as disabled after it expires
       Condition: condition.NewBuilder().
          AttributeKey("tags").
          AnyOfWords("SpaceX").

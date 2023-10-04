@@ -10,6 +10,7 @@ import (
 	"github.com/awakari/client-sdk-go/model/subscription/condition"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type Service interface {
@@ -59,6 +60,7 @@ func (svc service) Create(ctx context.Context, userId string, subData subscripti
 		Cond:        encodeCondition(subData.Condition),
 		Description: subData.Description,
 		Enabled:     subData.Enabled,
+		Expires:     timestamppb.New(subData.Expires.UTC()),
 	}
 	var resp *CreateResponse
 	resp, err = svc.client.Create(ctx, &req)
@@ -81,6 +83,9 @@ func (svc service) Read(ctx context.Context, userId, subId string) (subData subs
 		subData.Condition, err = decodeCondition(resp.Cond)
 		subData.Description = resp.Description
 		subData.Enabled = resp.Enabled
+		if resp.Expires != nil {
+			subData.Expires = resp.Expires.AsTime()
+		}
 	}
 	return
 }
@@ -91,6 +96,7 @@ func (svc service) Update(ctx context.Context, userId, subId string, data subscr
 		Id:          subId,
 		Description: data.Description,
 		Enabled:     data.Enabled,
+		Expires:     timestamppb.New(data.Expires.UTC()),
 	}
 	_, err = svc.client.Update(ctx, &req)
 	err = decodeError(err)

@@ -96,6 +96,16 @@ func TestService_Create(t *testing.T) {
 			},
 			err: limits.ErrReached,
 		},
+		"ok with expiration": {
+			req: subscription.Data{
+				Description: "my subscription",
+				Expires:     time.Now(),
+				Condition: condition.NewTextCondition(
+					condition.NewKeyCondition(condition.NewCondition(false), "key0"),
+					"ok", false,
+				),
+			},
+		},
 	}
 	//
 	for k, c := range cases {
@@ -134,6 +144,7 @@ func TestService_Read(t *testing.T) {
 			sd: subscription.Data{
 				Description: "subscription",
 				Enabled:     true,
+				Expires:     time.Date(2023, 10, 4, 11, 44, 55, 0, time.UTC),
 				Condition: condition.
 					NewBuilder().
 					Any(
@@ -165,6 +176,7 @@ func TestService_Read(t *testing.T) {
 				assert.Nil(t, err)
 				assert.Equal(t, c.sd.Description, sd.Description)
 				assert.Equal(t, c.sd.Enabled, sd.Enabled)
+				assert.Equal(t, c.sd.Expires, sd.Expires)
 				assert.True(t, conditionsDataEqual(c.sd.Condition, sd.Condition))
 			} else {
 				assert.ErrorIs(t, err, c.err)
@@ -191,6 +203,7 @@ func TestService_Update(t *testing.T) {
 			sd: subscription.Data{
 				Description: "my subscription",
 				Enabled:     false,
+				Expires:     time.Now(),
 			},
 		},
 		"fail": {

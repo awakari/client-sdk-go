@@ -1,6 +1,6 @@
 module github.com/awakari/client-sdk-go
 
-go 1.20
+go 1.21
 
 require (
 	github.com/cloudevents/sdk-go/binding/format/protobuf/v2 v2.14.0

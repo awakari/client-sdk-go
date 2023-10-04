@@ -6,6 +6,7 @@ import (
 	"github.com/awakari/client-sdk-go/api/grpc/limits"
 	"github.com/awakari/client-sdk-go/model/subscription"
 	"github.com/awakari/client-sdk-go/model/subscription/condition"
+	"time"
 )
 
 type serviceMock struct {
@@ -44,6 +45,7 @@ func (sm serviceMock) Read(ctx context.Context, userId, subId string) (subData s
 	default:
 		subData.Description = "my subscription"
 		subData.Enabled = true
+		subData.Expires = time.Date(2023, 10, 4, 11, 44, 55, 0, time.UTC)
 		subData.Condition = condition.
 			NewBuilder().
 			Any([]condition.Condition{

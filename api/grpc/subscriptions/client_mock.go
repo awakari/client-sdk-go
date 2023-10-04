@@ -5,6 +5,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
+	"time"
 )
 
 type clientMock struct{}
@@ -44,6 +46,7 @@ func (cm clientMock) Read(ctx context.Context, req *ReadRequest, opts ...grpc.Ca
 	default:
 		resp.Description = "subscription"
 		resp.Enabled = true
+		resp.Expires = timestamppb.New(time.Date(2023, 10, 4, 11, 44, 55, 0, time.UTC))
 		resp.Cond = &Condition{
 			Cond: &Condition_Gc{
 				Gc: &GroupCondition{

@@ -391,6 +391,7 @@ func TestClient_CreateSubscription(t *testing.T) {
 			ctx := context.TODO()
 			subData := subscription.Data{
 				Description: c.descr,
+				Expires:     time.Now(),
 			}
 			id, err := cl.CreateSubscription(ctx, "user0", subData)
 			assert.Equal(t, c.id, id)
@@ -413,6 +414,7 @@ func TestClient_ReadSubscription(t *testing.T) {
 			subData: subscription.Data{
 				Description: "my subscription",
 				Enabled:     true,
+				Expires:     time.Date(2023, 10, 4, 11, 44, 55, 0, time.UTC),
 				Condition: condition.
 					NewBuilder().
 					Any([]condition.Condition{
@@ -496,7 +498,9 @@ func TestClient_UpdateSubscriptionMetadata(t *testing.T) {
 				svcSubs: c.svcSubs,
 			}
 			ctx := context.TODO()
-			err := cl.UpdateSubscription(ctx, "user0", c.subId, subscription.Data{})
+			err := cl.UpdateSubscription(ctx, "user0", c.subId, subscription.Data{
+				Expires: time.Now(),
+			})
 			assert.ErrorIs(t, err, c.err)
 			assert.Nil(t, cl.Close())
 		})

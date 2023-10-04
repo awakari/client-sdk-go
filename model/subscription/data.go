@@ -1,6 +1,9 @@
 package subscription
 
-import "github.com/awakari/client-sdk-go/model/subscription/condition"
+import (
+	"github.com/awakari/client-sdk-go/model/subscription/condition"
+	"time"
+)
 
 type Data struct {
 
@@ -13,4 +16,7 @@ type Data struct {
 
 	// Enabled defines whether subscription is active and may be used to deliver a message.
 	Enabled bool
+
+	// Expires defines a deadline when subscription becomes disabled regardless the Enabled value.
+	Expires time.Time
 }
