@@ -14,6 +14,7 @@ import (
 
 type Service interface {
 	OpenReader(ctx context.Context, userId, subId string, batchSize uint32) (rs model.Reader[[]*pb.CloudEvent], err error)
+	OpenAckReader(ctx context.Context, userId, subId string, batchSize uint32) (r model.AckReader[[]*pb.CloudEvent], err error)
 }
 
 type service struct {
@@ -49,6 +50,28 @@ func (svc service) OpenReader(ctx context.Context, userId, subId string, batchSi
 	}
 	if err == nil {
 		rs = newStreamReader(stream)
+	}
+	err = decodeError(err)
+	return
+}
+
+func (svc service) OpenAckReader(ctx context.Context, userId, subId string, batchSize uint32) (r model.AckReader[[]*pb.CloudEvent], err error) {
+	ctx = auth.SetOutgoingAuthInfo(ctx, userId)
+	var stream Service_ReadClient
+	stream, err = svc.client.Read(ctx)
+	if err == nil {
+		reqStart := ReadRequest{
+			Command: &ReadRequest_Start{
+				Start: &ReadCommandStart{
+					SubId:     subId,
+					BatchSize: batchSize,
+				},
+			},
+		}
+		err = stream.Send(&reqStart)
+	}
+	if err == nil {
+		r = newStreamAckReader(stream)
 	}
 	err = decodeError(err)
 	return

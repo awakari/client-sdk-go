@@ -36,6 +36,9 @@ type Client interface {
 	// OpenMessagesReader opens batch message reader. A client should close it once done.
 	OpenMessagesReader(ctx context.Context, userId, subId string, batchSize uint32) (r model.Reader[[]*pb.CloudEvent], err error)
 
+	// OpenMessagesAckReader opens batch message reader that requires an explicit ack. A client should close it once done.
+	OpenMessagesAckReader(ctx context.Context, userId, subId string, batchSize uint32) (r model.AckReader[[]*pb.CloudEvent], err error)
+
 	// Subscriptions
 
 	// CreateSubscription with the specified fields.
@@ -121,6 +124,15 @@ func (c client) OpenMessagesReader(ctx context.Context, userId, subId string, ba
 		err = fmt.Errorf("%w: OpenMessagesReader(...)", ErrApiDisabled)
 	} else {
 		rs, err = c.svcReader.OpenReader(ctx, userId, subId, batchSize)
+	}
+	return
+}
+
+func (c client) OpenMessagesAckReader(ctx context.Context, userId, subId string, batchSize uint32) (r model.AckReader[[]*pb.CloudEvent], err error) {
+	if c.svcReader == nil {
+		err = fmt.Errorf("%w: OpenMessagesAckReader(...)", ErrApiDisabled)
+	} else {
+		r, err = c.svcReader.OpenAckReader(ctx, userId, subId, batchSize)
 	}
 	return
 }

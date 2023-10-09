@@ -28,3 +28,18 @@ func (sm serviceMock) OpenReader(ctx context.Context, userId, subId string, batc
 	}
 	return
 }
+
+func (sm serviceMock) OpenAckReader(ctx context.Context, userId, subId string, batchSize uint32) (r model.AckReader[[]*pb.CloudEvent], err error) {
+	switch subId {
+	case "fail":
+		err = ErrInternal
+	case "fail_auth":
+		err = auth.ErrAuth
+	case "missing":
+		err = ErrNotFound
+	}
+	if err == nil {
+		r = newStreamAckReaderMock(subId, batchSize)
+	}
+	return
+}

@@ -463,6 +463,58 @@ func main() {
 }
 ```
 
+### 3.4.3. Receiving With Acknowledge
+
+```go
+package main
+
+import (
+   "context"
+   "errors"
+   "fmt"
+   "github.com/awakari/client-sdk-go/api"
+   "github.com/awakari/client-sdk-go/model/usage"
+   "time"
+)
+...
+)
+
+func main() {
+   ...
+   var client api.Client // TODO initialize client here
+   var userId string     // set this to "sub" field value from an authentication token, for example
+   batchSize := uint32(16)
+   ...
+   ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Second)
+   defer cancel()
+   var r model.ReadStream[*pb.CloudEvent]
+   r, err = client.OpenMessagesAckReader(ctx, userId, subId, batchSize)
+   if err != nil {
+      panic(err)
+   }
+   defer r.Close()
+   var msgs []*pb.CloudEvent
+   var ackCount uint32
+   for {
+      msgs, err = r.Read()
+      if err == nil {
+         fmt.Printf("subscription %s - received the next messages batch: %+v\n", subId, msgs)
+         ackCount, err = process(msgs)
+      }
+      if ackCount > 0 {
+         err = errors.Join(err, r.Ack(ackCount))
+      }
+      if err != nil {
+         break
+      }
+   }
+   if err != nil {
+      panic(err)
+   }
+   ...
+}
+```
+
 # 4. Contributing
 
 ## 4.1. Versioning

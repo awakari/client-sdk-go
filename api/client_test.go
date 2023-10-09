@@ -251,6 +251,108 @@ func TestClient_ReadMessages(t *testing.T) {
 	}
 }
 
+func TestClient_ReadMessages_Ack(t *testing.T) {
+	cases := map[string]struct {
+		svcReader reader.Service
+		subId     string
+		batchSize uint32
+		msgs      []*pb.CloudEvent
+		err0      error
+		err1      error
+	}{
+		"ok": {
+			svcReader: reader.NewServiceMock(),
+			subId:     "sub0",
+			batchSize: 3,
+			msgs: []*pb.CloudEvent{
+				{
+					Id:          "msg0",
+					Source:      "source0",
+					SpecVersion: "specversion0",
+					Type:        "type0",
+					Attributes:  map[string]*pb.CloudEventAttributeValue{},
+					Data: &pb.CloudEvent_TextData{
+						TextData: "data",
+					},
+				},
+				{
+					Id:          "msg1",
+					Source:      "source0",
+					SpecVersion: "specversion0",
+					Type:        "type0",
+					Attributes:  map[string]*pb.CloudEventAttributeValue{},
+					Data: &pb.CloudEvent_TextData{
+						TextData: "data",
+					},
+				},
+				{
+					Id:          "msg2",
+					Source:      "source0",
+					SpecVersion: "specversion0",
+					Type:        "type0",
+					Attributes:  map[string]*pb.CloudEventAttributeValue{},
+					Data: &pb.CloudEvent_TextData{
+						TextData: "data",
+					},
+				},
+			},
+		},
+		"api disabled": {
+			subId:     "sub0",
+			batchSize: 3,
+			err0:      ErrApiDisabled,
+		},
+		"fail": {
+			svcReader: reader.NewServiceMock(),
+			subId:     "fail",
+			batchSize: 3,
+			err0:      reader.ErrInternal,
+		},
+		"fail auth": {
+			svcReader: reader.NewServiceMock(),
+			subId:     "fail_auth",
+			batchSize: 3,
+			err0:      auth.ErrAuth,
+		},
+		"fail read": {
+			svcReader: reader.NewServiceMock(),
+			subId:     "fail_read",
+			batchSize: 3,
+			err1:      reader.ErrInternal,
+		},
+		"sub missing": {
+			svcReader: reader.NewServiceMock(),
+			subId:     "missing",
+			batchSize: 3,
+			err0:      reader.ErrNotFound,
+		},
+		"invalid batch size": {
+			svcReader: reader.NewServiceMock(),
+			subId:     "sub0",
+			batchSize: 0,
+			err1:      reader.ErrInvalidRequest,
+		},
+	}
+	for k, c := range cases {
+		t.Run(k, func(t *testing.T) {
+			cl := client{
+				svcReader: c.svcReader,
+			}
+			rs, err := cl.OpenMessagesAckReader(context.TODO(), "user0", c.subId, c.batchSize)
+			assert.ErrorIs(t, err, c.err0)
+			if err == nil {
+				var msgs []*pb.CloudEvent
+				msgs, err = rs.Read()
+				assert.Equal(t, c.msgs, msgs)
+				assert.ErrorIs(t, err, c.err1)
+				assert.Nil(t, rs.Ack(uint32(len(msgs))))
+				assert.Nil(t, rs.Close())
+			}
+			assert.Nil(t, cl.Close())
+		})
+	}
+}
+
 func TestClient_WriteMessages(t *testing.T) {
 	cases := map[string]struct {
 		svcWriter resolver.Service
