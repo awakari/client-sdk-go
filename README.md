@@ -312,10 +312,12 @@ func main() {
    }
    subId, err = client.CreateSubscription(ctx, userId, subData)
    
-   // Update the subscription mutable fields
+   // Update the subscription
    upd := subscription.Data{
       Description: "my disabled subscription",
       Enabled:     false,
+      subData.Expires, // don't change
+      subData.Condition, // don't change
    }
    err = client.UpdateSubscription(ctx, userId, subId, upd)
    

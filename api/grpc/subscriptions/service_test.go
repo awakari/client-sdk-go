@@ -195,7 +195,17 @@ func TestService_Update(t *testing.T) {
 		sd  subscription.Data
 	}{
 		"not found": {
-			id:  "missing",
+			id: "missing",
+			sd: subscription.Data{
+				Condition: condition.NewTextCondition(
+					condition.NewKeyCondition(
+						condition.NewCondition(false),
+						"key1",
+					),
+					"term1",
+					true,
+				),
+			},
 			err: ErrNotFound,
 		},
 		"ok": {
@@ -204,14 +214,60 @@ func TestService_Update(t *testing.T) {
 				Description: "my subscription",
 				Enabled:     false,
 				Expires:     time.Now(),
+				Condition: condition.NewGroupCondition(
+					condition.NewCondition(false),
+					condition.GroupLogicOr,
+					[]condition.Condition{
+						condition.NewNumberCondition(
+							condition.NewKeyCondition(
+								condition.NewCondition(true),
+								"key0",
+							),
+							condition.NumOpGt,
+							42,
+						),
+						condition.NewTextCondition(
+							condition.NewKeyCondition(
+								condition.NewCondition(false),
+								"key1",
+							),
+							"term1",
+							true,
+						),
+					},
+				),
 			},
 		},
 		"fail": {
-			id:  "fail",
+			id: "fail",
+			sd: subscription.Data{
+				Condition: condition.NewTextCondition(
+					condition.NewKeyCondition(
+						condition.NewCondition(false),
+						"key1",
+					),
+					"term1",
+					true,
+				),
+			},
 			err: ErrInternal,
 		},
+		"missing condition": {
+			id:  "sub0",
+			err: ErrInvalid,
+		},
 		"fail auth": {
-			id:  "fail_auth",
+			id: "fail_auth",
+			sd: subscription.Data{
+				Condition: condition.NewTextCondition(
+					condition.NewKeyCondition(
+						condition.NewCondition(false),
+						"key1",
+					),
+					"term1",
+					true,
+				),
+			},
 			err: auth.ErrAuth,
 		},
 	}

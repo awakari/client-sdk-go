@@ -21,7 +21,7 @@ type Service interface {
 	// Read returns the subscription specified by the id. Returns ErrNotFound if subscription is missing.
 	Read(ctx context.Context, userId, subId string) (subData subscription.Data, err error)
 
-	// Update the mutable part of the subscription.Data
+	// Update the subscription.Data
 	Update(ctx context.Context, userId, subId string, subData subscription.Data) (err error)
 
 	// Delete the specified subscription all associated conditions those not in use by any other subscription.
@@ -92,14 +92,20 @@ func (svc service) Read(ctx context.Context, userId, subId string) (subData subs
 
 func (svc service) Update(ctx context.Context, userId, subId string, data subscription.Data) (err error) {
 	ctx = auth.SetOutgoingAuthInfo(ctx, userId)
-	req := UpdateRequest{
-		Id:          subId,
-		Description: data.Description,
-		Enabled:     data.Enabled,
-		Expires:     timestamppb.New(data.Expires.UTC()),
+	if data.Condition == nil {
+		err = fmt.Errorf("%w: missing condition", ErrInvalid)
 	}
-	_, err = svc.client.Update(ctx, &req)
-	err = decodeError(err)
+	if err == nil {
+		req := UpdateRequest{
+			Id:          subId,
+			Description: data.Description,
+			Enabled:     data.Enabled,
+			Expires:     timestamppb.New(data.Expires.UTC()),
+			Cond:        encodeCondition(data.Condition),
+		}
+		_, err = svc.client.Update(ctx, &req)
+		err = decodeError(err)
+	}
 	return
 }
 
