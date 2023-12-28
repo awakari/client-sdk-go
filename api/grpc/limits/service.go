@@ -23,6 +23,8 @@ var ErrInternal = errors.New("internal failure")
 
 var ErrReached = errors.New("usage limit reached")
 
+var ErrUnavailable = errors.New("unavailable")
+
 func NewService(client ServiceClient) Service {
 	return service{
 		client: client,
@@ -59,6 +61,8 @@ func decodeError(src error) (dst error) {
 		case s.Code() == codes.OK:
 		case s.Code() == codes.Unauthenticated:
 			dst = fmt.Errorf("%w: %s", auth.ErrAuth, src)
+		case s.Code() == codes.Unavailable:
+			dst = fmt.Errorf("%w: %s", ErrUnavailable, src)
 		default:
 			dst = fmt.Errorf("%w: %s", ErrInternal, src)
 		}

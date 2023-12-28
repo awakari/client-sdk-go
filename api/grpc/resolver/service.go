@@ -20,6 +20,7 @@ type service struct {
 	client ServiceClient
 }
 
+var ErrUnavailable = errors.New("unavailable")
 var ErrInternal = errors.New("internal failure")
 
 func NewService(client ServiceClient) Service {
@@ -52,6 +53,10 @@ func decodeError(src error) (dst error) {
 			dst = fmt.Errorf("%w: %s", limits.ErrReached, src)
 		case s.Code() == codes.Unauthenticated:
 			dst = fmt.Errorf("%w: %s", auth.ErrAuth, src)
+		case s.Code() == codes.Unavailable:
+			dst = fmt.Errorf("%w: %s", ErrUnavailable, src)
+		case status.Code(src) == codes.DeadlineExceeded:
+			dst = context.DeadlineExceeded
 		default:
 			dst = fmt.Errorf("%w: %s", ErrInternal, src)
 		}

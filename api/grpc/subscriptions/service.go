@@ -48,6 +48,8 @@ var ErrInternal = errors.New("internal failure")
 // ErrInvalid indicates the invalid subscription.
 var ErrInvalid = errors.New("invalid subscription")
 
+var ErrUnavailable = errors.New("unavailable")
+
 func NewService(client ServiceClient) Service {
 	return service{
 		client: client,
@@ -264,6 +266,8 @@ func decodeError(src error) (dst error) {
 			dst = fmt.Errorf("%w: %s", ErrBusy, src)
 		case s.Code() == codes.Unauthenticated:
 			dst = fmt.Errorf("%w: %s", auth.ErrAuth, src)
+		case s.Code() == codes.Unavailable:
+			dst = fmt.Errorf("%w: %s", ErrUnavailable, src)
 		default:
 			dst = fmt.Errorf("%w: %s", ErrInternal, src)
 		}

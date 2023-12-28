@@ -27,6 +27,8 @@ var ErrInvalidRequest = errors.New("invalid request")
 
 var ErrNotFound = errors.New("subscription not found")
 
+var ErrUnavailable = errors.New("unavailable")
+
 func NewService(client ServiceClient) Service {
 	return service{
 		client: client,
@@ -91,6 +93,8 @@ func decodeError(src error) (dst error) {
 		dst = fmt.Errorf("%w: %s", auth.ErrAuth, src)
 	case status.Code(src) == codes.NotFound:
 		dst = fmt.Errorf("%w: %s", ErrNotFound, src)
+	case status.Code(src) == codes.Unavailable:
+		dst = fmt.Errorf("%w: %s", ErrUnavailable, src)
 	default:
 		dst = fmt.Errorf("%w: %s", ErrInternal, src)
 	}
