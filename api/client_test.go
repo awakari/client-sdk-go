@@ -482,7 +482,7 @@ func TestClient_CreateSubscription(t *testing.T) {
 		"busy": {
 			svcSubs: subscriptions.NewServiceMock(),
 			descr:   "busy",
-			err:     subscriptions.ErrBusy,
+			err:     subscriptions.ErrUnavailable,
 		},
 	}
 	for k, c := range cases {

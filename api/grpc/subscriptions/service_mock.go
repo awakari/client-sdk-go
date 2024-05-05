@@ -27,7 +27,7 @@ func (sm serviceMock) Create(ctx context.Context, userId string, subData subscri
 	case "limit_reached":
 		err = limits.ErrReached
 	case "busy":
-		err = ErrBusy
+		err = ErrUnavailable
 	default:
 		id = "sub0"
 	}

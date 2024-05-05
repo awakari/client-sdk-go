@@ -39,9 +39,6 @@ type service struct {
 // ErrNotFound indicates the subscription is missing in the storage and can not be read/updated/deleted.
 var ErrNotFound = errors.New("subscription was not found")
 
-// ErrBusy indicates a storage entity is locked and the operation should be retried.
-var ErrBusy = errors.New("subscription is busy, retry the operation")
-
 // ErrInternal indicates some unexpected internal failure.
 var ErrInternal = errors.New("internal failure")
 
@@ -262,8 +259,6 @@ func decodeError(src error) (dst error) {
 			dst = fmt.Errorf("%w: %s", ErrInvalid, src)
 		case s.Code() == codes.ResourceExhausted:
 			dst = fmt.Errorf("%w: %s", limits.ErrReached, src)
-		case s.Code() == codes.Unavailable:
-			dst = fmt.Errorf("%w: %s", ErrBusy, src)
 		case s.Code() == codes.Unauthenticated:
 			dst = fmt.Errorf("%w: %s", auth.ErrAuth, src)
 		case s.Code() == codes.Unavailable:

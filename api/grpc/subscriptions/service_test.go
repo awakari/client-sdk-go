@@ -37,7 +37,7 @@ func TestService_Create(t *testing.T) {
 					"locked", false,
 				),
 			},
-			err: ErrBusy,
+			err: ErrUnavailable,
 		},
 		"fail": {
 			req: subscription.Data{
