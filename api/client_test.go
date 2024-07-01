@@ -690,7 +690,9 @@ func TestClient_SearchSubscriptions(t *testing.T) {
 				svcSubs: c.svcSubs,
 			}
 			ctx := context.TODO()
-			ids, err := cl.SearchSubscriptions(ctx, "user0", 0, c.cursor)
+			ids, err := cl.SearchSubscriptions(ctx, "user0", subscription.Query{}, subscription.Cursor{
+				Id: c.cursor,
+			})
 			assert.Equal(t, c.ids, ids)
 			assert.ErrorIs(t, err, c.err)
 			assert.Nil(t, cl.Close())

@@ -86,8 +86,8 @@ func (sm serviceMock) Delete(ctx context.Context, userId, subId string) (err err
 	return
 }
 
-func (sm serviceMock) SearchOwn(ctx context.Context, userId string, limit uint32, cursor string) (ids []string, err error) {
-	switch cursor {
+func (sm serviceMock) Search(ctx context.Context, userId string, q subscription.Query, cursor subscription.Cursor) (ids []string, err error) {
+	switch cursor.Id {
 	case "":
 		ids = []string{
 			"sub0",

@@ -55,7 +55,7 @@ type Client interface {
 	DeleteSubscription(ctx context.Context, userId, subId string) (err error)
 
 	// SearchSubscriptions returns all subscription ids those have the requested user id.
-	SearchSubscriptions(ctx context.Context, userId string, limit uint32, cursor string) (ids []string, err error)
+	SearchSubscriptions(ctx context.Context, userId string, q subscription.Query, cursor subscription.Cursor) (ids []string, err error)
 }
 
 type client struct {
@@ -173,11 +173,11 @@ func (c client) DeleteSubscription(ctx context.Context, userId, subId string) (e
 	return
 }
 
-func (c client) SearchSubscriptions(ctx context.Context, userId string, limit uint32, cursor string) (ids []string, err error) {
+func (c client) SearchSubscriptions(ctx context.Context, userId string, q subscription.Query, cursor subscription.Cursor) (ids []string, err error) {
 	if c.svcSubs == nil {
 		err = fmt.Errorf("%w: SearchSubscriptions(...)", ErrApiDisabled)
 	} else {
-		ids, err = c.svcSubs.SearchOwn(ctx, userId, limit, cursor)
+		ids, err = c.svcSubs.Search(ctx, userId, q, cursor)
 	}
 	return
 }

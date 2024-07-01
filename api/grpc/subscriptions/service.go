@@ -28,8 +28,8 @@ type Service interface {
 	// Returns ErrNotFound if a subscription with the specified id is missing.
 	Delete(ctx context.Context, userId, subId string) (err error)
 
-	// SearchOwn returns all subscription ids those have the requested user id.
-	SearchOwn(ctx context.Context, userId string, limit uint32, cursor string) (ids []string, err error)
+	// Search returns all subscription ids matching the query.
+	Search(ctx context.Context, userId string, q subscription.Query, cursor subscription.Cursor) (ids []string, err error)
 }
 
 type service struct {
@@ -60,6 +60,7 @@ func (svc service) Create(ctx context.Context, userId string, subData subscripti
 		Description: subData.Description,
 		Enabled:     subData.Enabled,
 		Expires:     timestamppb.New(subData.Expires.UTC()),
+		Public:      subData.Public,
 	}
 	var resp *CreateResponse
 	resp, err = svc.client.Create(ctx, &req)
@@ -85,6 +86,14 @@ func (svc service) Read(ctx context.Context, userId, subId string) (subData subs
 		if resp.Expires != nil {
 			subData.Expires = resp.Expires.AsTime()
 		}
+		if resp.Created != nil {
+			subData.Created = resp.Created.AsTime()
+		}
+		if resp.Updated != nil {
+			subData.Created = resp.Updated.AsTime()
+		}
+		subData.Public = resp.Public
+		subData.Followers = resp.Followers
 	}
 	return
 }
@@ -101,6 +110,7 @@ func (svc service) Update(ctx context.Context, userId, subId string, data subscr
 			Enabled:     data.Enabled,
 			Expires:     timestamppb.New(data.Expires.UTC()),
 			Cond:        encodeCondition(data.Condition),
+			Public:      data.Public,
 		}
 		_, err = svc.client.Update(ctx, &req)
 		err = decodeError(err)
@@ -118,18 +128,39 @@ func (svc service) Delete(ctx context.Context, userId, subId string) (err error)
 	return
 }
 
-func (svc service) SearchOwn(ctx context.Context, userId string, limit uint32, cursor string) (ids []string, err error) {
+func (svc service) Search(ctx context.Context, userId string, q subscription.Query, cursor subscription.Cursor) (ids []string, err error) {
 	ctx = auth.SetOutgoingAuthInfo(ctx, userId)
-	req := SearchOwnRequest{
-		Cursor: cursor,
-		Limit:  limit,
+	switch q.Public {
+	case true:
+		req := SearchRequest{
+			Cursor: &Cursor{
+				Followers: cursor.Followers,
+				Id:        cursor.Id,
+			},
+			Limit:   q.Limit,
+			Order:   Order(q.Order),
+			Pattern: q.Pattern,
+			Sort:    Sort(q.Sort),
+		}
+		var resp *SearchResponse
+		resp, err = svc.client.Search(ctx, &req)
+		if resp != nil {
+			ids = resp.Ids
+		}
+	default:
+		req := SearchOwnRequest{
+			Cursor:  cursor.Id,
+			Limit:   q.Limit,
+			Order:   Order(q.Order),
+			Pattern: q.Pattern,
+		}
+		var resp *SearchOwnResponse
+		resp, err = svc.client.SearchOwn(ctx, &req)
+		if resp != nil {
+			ids = resp.Ids
+		}
 	}
-	var resp *SearchOwnResponse
-	resp, err = svc.client.SearchOwn(ctx, &req)
 	err = decodeError(err)
-	if err == nil {
-		ids = resp.Ids
-	}
 	return
 }
 

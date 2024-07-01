@@ -326,7 +326,7 @@ func TestService_Delete(t *testing.T) {
 	}
 }
 
-func TestService_SearchOwn(t *testing.T) {
+func TestService_Search(t *testing.T) {
 	//
 	svc := NewService(newClientMock())
 	//
@@ -355,7 +355,9 @@ func TestService_SearchOwn(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 			defer cancel()
-			ids, err := svc.SearchOwn(ctx, "user0", 0, c.cursor)
+			ids, err := svc.Search(ctx, "user0", subscription.Query{}, subscription.Cursor{
+				Id: c.cursor,
+			})
 			assert.Equal(t, ids, c.ids)
 			assert.ErrorIs(t, err, c.err)
 		})

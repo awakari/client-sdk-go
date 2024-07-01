@@ -19,4 +19,12 @@ type Data struct {
 
 	// Expires defines a deadline when subscription becomes disabled regardless the Enabled value.
 	Expires time.Time
+
+	Created time.Time
+
+	Updated time.Time
+
+	Public bool
+
+	Followers int64
 }

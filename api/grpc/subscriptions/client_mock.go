@@ -47,6 +47,10 @@ func (cm clientMock) Read(ctx context.Context, req *ReadRequest, opts ...grpc.Ca
 		resp.Description = "subscription"
 		resp.Enabled = true
 		resp.Expires = timestamppb.New(time.Date(2023, 10, 4, 11, 44, 55, 0, time.UTC))
+		resp.Created = timestamppb.New(time.Date(2023, 10, 4, 11, 44, 54, 0, time.UTC))
+		resp.Updated = timestamppb.New(time.Date(2023, 10, 4, 11, 44, 53, 0, time.UTC))
+		resp.Public = true
+		resp.Followers = 42
 		resp.Cond = &Condition{
 			Cond: &Condition_Gc{
 				Gc: &GroupCondition{
@@ -107,6 +111,22 @@ func (cm clientMock) Delete(ctx context.Context, req *DeleteRequest, opts ...grp
 func (cm clientMock) SearchOwn(ctx context.Context, req *SearchOwnRequest, opts ...grpc.CallOption) (resp *SearchOwnResponse, err error) {
 	resp = &SearchOwnResponse{}
 	switch req.Cursor {
+	case "":
+		resp.Ids = []string{
+			"sub0",
+			"sub1",
+		}
+	case "fail":
+		err = status.Error(codes.Internal, "internal failure")
+	case "fail_auth":
+		err = status.Error(codes.Unauthenticated, "authentication failure")
+	}
+	return
+}
+
+func (cm clientMock) Search(ctx context.Context, req *SearchRequest, opts ...grpc.CallOption) (resp *SearchResponse, err error) {
+	resp = &SearchResponse{}
+	switch req.Cursor.Id {
 	case "":
 		resp.Ids = []string{
 			"sub0",

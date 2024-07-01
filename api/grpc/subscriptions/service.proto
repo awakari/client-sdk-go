@@ -8,10 +8,16 @@ import "google/protobuf/timestamp.proto";
 service Service {
 
   rpc Create(CreateRequest) returns (CreateResponse);
+
   rpc Read(ReadRequest) returns (ReadResponse);
+
   rpc Update(UpdateRequest) returns (UpdateResponse);
+
   rpc Delete(DeleteRequest) returns (DeleteResponse);
+
   rpc SearchOwn(SearchOwnRequest) returns (SearchOwnResponse);
+
+  rpc Search(SearchRequest) returns (SearchResponse);
 }
 
 // Create
@@ -21,6 +27,7 @@ message CreateRequest {
   bool enabled = 2;
   Condition cond = 3;
   google.protobuf.Timestamp expires = 4;
+  bool public = 5;
 }
 
 // Condition represents the Subscription routing Condition data that is immutable once Subscription is created.
@@ -82,6 +89,10 @@ message ReadResponse {
   bool enabled = 2;
   Condition cond = 3;
   google.protobuf.Timestamp expires = 4;
+  google.protobuf.Timestamp created = 5;
+  google.protobuf.Timestamp updated = 6;
+  bool public = 7;
+  int64 followers = 8;
 }
 
 // Update
@@ -92,6 +103,7 @@ message UpdateRequest {
   bool enabled = 3;
   google.protobuf.Timestamp expires = 4;
   Condition cond = 5;
+  bool public = 6;
 }
 
 message UpdateResponse {
@@ -111,8 +123,41 @@ message DeleteResponse {
 message SearchOwnRequest {
   string cursor = 1;
   uint32 limit = 2;
+  Order order = 3;
+  string pattern = 4;
+}
+
+enum Order {
+  ASC = 0;
+  DESC = 1;
 }
 
 message SearchOwnResponse {
+  repeated string ids = 1;
+}
+
+// Search (including public interests)
+
+// Search
+
+message SearchRequest {
+  Cursor cursor = 1;
+  uint32 limit = 2;
+  Order order = 3;
+  string Pattern = 4;
+  Sort sort = 5;
+}
+
+message Cursor {
+  string id = 1;
+  int64 followers = 2;
+}
+
+enum Sort {
+  ID = 0;
+  FOLLOWERS = 1;
+}
+
+message SearchResponse {
   repeated string ids = 1;
 }
