@@ -13,7 +13,7 @@ import (
 	"github.com/awakari/client-sdk-go/model/subscription"
 	"github.com/awakari/client-sdk-go/model/usage"
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
-	"google.golang.org/grpc"
+	grpcpool "github.com/processout/grpc-go-pool"
 	"io"
 )
 
@@ -59,35 +59,31 @@ type Client interface {
 }
 
 type client struct {
-	connLimits  *grpc.ClientConn
-	connReader  *grpc.ClientConn
-	connPermits *grpc.ClientConn
-	connSubs    *grpc.ClientConn
-	connWriter  *grpc.ClientConn
-	svcLimits   limits.Service
-	svcReader   reader.Service
-	svcPermits  permits.Service
-	svcSubs     subscriptions.Service
-	svcWriter   resolver.Service
+	connPoolApi    *grpcpool.Pool
+	connPoolReader *grpcpool.Pool
+	connPoolSubs   *grpcpool.Pool
+	connPoolWriter *grpcpool.Pool
+	svcLimits      limits.Service
+	svcReader      reader.Service
+	svcPermits     permits.Service
+	svcSubs        subscriptions.Service
+	svcWriter      resolver.Service
 }
 
 var ErrApiDisabled = errors.New("the API call is not enabled for this client")
 
 func (c client) Close() (err error) {
-	if c.connLimits != nil {
-		err = errors.Join(err, c.connLimits.Close())
+	if c.connPoolApi != nil {
+		c.connPoolApi.Close()
 	}
-	if c.connReader != nil {
-		err = errors.Join(err, c.connReader.Close())
+	if c.connPoolReader != nil {
+		c.connPoolReader.Close()
 	}
-	if c.connPermits != nil {
-		err = errors.Join(err, c.connPermits.Close())
+	if c.connPoolSubs != nil {
+		c.connPoolSubs.Close()
 	}
-	if c.connSubs != nil {
-		err = errors.Join(err, c.connSubs.Close())
-	}
-	if c.connWriter != nil {
-		err = errors.Join(err, c.connWriter.Close())
+	if c.connPoolWriter != nil {
+		c.connPoolWriter.Close()
 	}
 	return
 }

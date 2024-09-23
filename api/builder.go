@@ -8,9 +8,11 @@ import (
 	"github.com/awakari/client-sdk-go/api/grpc/reader"
 	"github.com/awakari/client-sdk-go/api/grpc/resolver"
 	"github.com/awakari/client-sdk-go/api/grpc/subscriptions"
+	grpcpool "github.com/processout/grpc-go-pool"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+	"time"
 )
 
 type ClientBuilder interface {
@@ -40,22 +42,29 @@ type ClientBuilder interface {
 	// Useful when the specific message publishing API is needed by the client.
 	WriterUri(writerUri string) ClientBuilder
 
+	Connections(countMax int, idleTimeout time.Duration, maxLifeDuration ...time.Duration) ClientBuilder
+
 	// Build instantiates the Client instance and returns it.
 	Build() (c Client, err error)
 }
 
 type builder struct {
-	caCrt     []byte
-	clientCrt []byte
-	clientKey []byte
-	apiUri    string
-	readerUri string
-	subsUri   string
-	writerUri string
+	caCrt               []byte
+	clientCrt           []byte
+	clientKey           []byte
+	apiUri              string
+	readerUri           string
+	subsUri             string
+	writerUri           string
+	connMax             int
+	connIdleTimeout     time.Duration
+	connMaxLifeDuration time.Duration
 }
 
 func NewClientBuilder() ClientBuilder {
-	return &builder{}
+	return &builder{
+		connMax: 1,
+	}
 }
 
 func (b *builder) CertAuthority(caCrt []byte) ClientBuilder {
@@ -89,6 +98,15 @@ func (b *builder) WriterUri(writerUri string) ClientBuilder {
 	return b
 }
 
+func (b *builder) Connections(countMax int, idleTimeout time.Duration, maxLifeDuration ...time.Duration) ClientBuilder {
+	b.connMax = countMax
+	b.connIdleTimeout = idleTimeout
+	if len(maxLifeDuration) > 0 {
+		b.connMaxLifeDuration = maxLifeDuration[0]
+	}
+	return b
+}
+
 func (b *builder) Build() (c Client, err error) {
 	//
 	tlsConfig := &tls.Config{}
@@ -116,69 +134,86 @@ func (b *builder) Build() (c Client, err error) {
 		grpc.WithTransportCredentials(creds),
 	}
 	//
-	var connLimits *grpc.ClientConn
+	var connPoolApi *grpcpool.Pool
+	if b.apiUri != "" {
+		connPoolApi, err = grpcpool.New(func() (*grpc.ClientConn, error) {
+			return grpc.NewClient(b.apiUri, optsDial...)
+		}, 1, b.connMax, b.connIdleTimeout, b.connMaxLifeDuration)
+	}
+	var connPoolReader *grpcpool.Pool
+	if b.readerUri != "" {
+		connPoolReader, err = grpcpool.New(func() (*grpc.ClientConn, error) {
+			return grpc.NewClient(b.readerUri, optsDial...)
+		}, 1, b.connMax, b.connIdleTimeout, b.connMaxLifeDuration)
+	}
+	var connPoolSubs *grpcpool.Pool
+	if b.subsUri != "" {
+		connPoolSubs, err = grpcpool.New(func() (*grpc.ClientConn, error) {
+			return grpc.NewClient(b.subsUri, optsDial...)
+		}, 1, b.connMax, b.connIdleTimeout, b.connMaxLifeDuration)
+	}
+	var connPoolWriter *grpcpool.Pool
+	if b.readerUri != "" {
+		connPoolWriter, err = grpcpool.New(func() (*grpc.ClientConn, error) {
+			return grpc.NewClient(b.writerUri, optsDial...)
+		}, 1, b.connMax, b.connIdleTimeout, b.connMaxLifeDuration)
+	}
+	//
 	var svcLimits limits.Service
 	if b.apiUri != "" {
-		connLimits, err = grpc.Dial(b.apiUri, optsDial...)
-		clientLimits := limits.NewServiceClient(connLimits)
+		clientLimits := limits.NewClientConnPool(connPoolApi)
 		svcLimits = limits.NewService(clientLimits)
 	}
 	//
-	var connReader *grpc.ClientConn
+	var clientReader reader.ServiceClient
 	if b.readerUri != "" {
-		connReader, err = grpc.Dial(b.readerUri, optsDial...)
+		clientReader = reader.NewClientConnPool(connPoolReader)
 	} else if b.apiUri != "" {
-		connReader, err = grpc.Dial(b.apiUri, optsDial...)
+		clientReader = reader.NewClientConnPool(connPoolApi)
 	}
 	var svcReader reader.Service
-	if connReader != nil {
-		clientReader := reader.NewServiceClient(connReader)
+	if clientReader != nil {
 		svcReader = reader.NewService(clientReader)
 	}
 	//
-	var connPermits *grpc.ClientConn
 	var svcPermits permits.Service
 	if b.apiUri != "" {
-		connPermits, err = grpc.Dial(b.apiUri, optsDial...)
-		clientPermits := permits.NewServiceClient(connPermits)
+		clientPermits := permits.NewClientConnPool(connPoolApi)
 		svcPermits = permits.NewService(clientPermits)
 	}
 	//
-	var connSubs *grpc.ClientConn
+	var clientSubs subscriptions.ServiceClient
 	if b.subsUri != "" {
-		connSubs, err = grpc.Dial(b.subsUri, optsDial...)
+		clientSubs = subscriptions.NewClientConnPool(connPoolSubs)
 	} else if b.apiUri != "" {
-		connSubs, err = grpc.Dial(b.apiUri, optsDial...)
+		clientSubs = subscriptions.NewClientConnPool(connPoolApi)
 	}
 	var svcSubs subscriptions.Service
-	if connSubs != nil {
-		clientSubs := subscriptions.NewServiceClient(connSubs)
+	if clientSubs != nil {
 		svcSubs = subscriptions.NewService(clientSubs)
 	}
 	//
-	var connWriter *grpc.ClientConn
+	var clientWriter resolver.ServiceClient
 	if b.writerUri != "" {
-		connWriter, err = grpc.Dial(b.writerUri, optsDial...)
+		clientWriter = resolver.NewClientConnPool(connPoolWriter)
 	} else if b.apiUri != "" {
-		connWriter, err = grpc.Dial(b.apiUri, optsDial...)
+		clientWriter = resolver.NewClientConnPool(connPoolApi)
 	}
 	var svcWriter resolver.Service
-	if connWriter != nil {
-		clientWriter := resolver.NewServiceClient(connWriter)
+	if clientWriter != nil {
 		svcWriter = resolver.NewService(clientWriter)
 	}
 	//
 	c = client{
-		connLimits:  connLimits,
-		connReader:  connReader,
-		connPermits: connPermits,
-		connSubs:    connSubs,
-		connWriter:  connWriter,
-		svcLimits:   svcLimits,
-		svcReader:   svcReader,
-		svcPermits:  svcPermits,
-		svcSubs:     svcSubs,
-		svcWriter:   svcWriter,
+		connPoolApi:    connPoolApi,
+		connPoolReader: connPoolReader,
+		connPoolSubs:   connPoolSubs,
+		connPoolWriter: connPoolWriter,
+		svcLimits:      svcLimits,
+		svcReader:      svcReader,
+		svcPermits:     svcPermits,
+		svcSubs:        svcSubs,
+		svcWriter:      svcWriter,
 	}
 	return
 }
