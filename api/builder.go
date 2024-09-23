@@ -153,7 +153,7 @@ func (b *builder) Build() (c Client, err error) {
 		}, 1, b.connMax, b.connIdleTimeout, b.connMaxLifeDuration)
 	}
 	var connPoolWriter *grpcpool.Pool
-	if b.readerUri != "" {
+	if b.writerUri != "" {
 		connPoolWriter, err = grpcpool.New(func() (*grpc.ClientConn, error) {
 			return grpc.NewClient(b.writerUri, optsDial...)
 		}, 1, b.connMax, b.connIdleTimeout, b.connMaxLifeDuration)
