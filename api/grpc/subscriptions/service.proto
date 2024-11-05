@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package awakari.subscriptions.proxy;
+package awakari.interests.api;
 
 option go_package = "./api/grpc/subscriptions";
 import "google/protobuf/timestamp.proto";
